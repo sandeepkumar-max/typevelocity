@@ -1,0 +1,6 @@
+{
+  "name": "TypeVelocity",
+  "description": "A highly interactive typing practice application with mini-games, glassmorphism design, and real-time stats.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

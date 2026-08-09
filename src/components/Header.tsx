@@ -1,0 +1,120 @@
+import { ViewState } from '../types';
+import { Keyboard, Play, Trophy, Menu, Sun, Moon } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { auth } from '../lib/firebase';
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User } from 'firebase/auth';
+
+interface HeaderProps {
+  currentView: ViewState;
+  onViewChange: (view: ViewState) => void;
+  theme: 'dark' | 'light';
+  onThemeToggle: () => void;
+  onMenuToggle: () => void;
+}
+
+export default function Header({ currentView, onViewChange, theme, onThemeToggle, onMenuToggle }: HeaderProps) {
+  const [user, setUser] = useState<User | null>(null);
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        return; // Ignore if user closes the popup
+      }
+      console.error('Error signing in', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Error signing out', error);
+    }
+  };
+
+  const navItems = [
+    { id: 'practice', label: 'Practice', icon: Keyboard },
+    { id: 'meteor', label: 'Meteor Drop', icon: Play },
+    { id: 'sprint', label: 'Neon Sprint', icon: Trophy },
+  ] as const;
+
+  return (
+    <header className="sticky top-0 z-40 glass-panel border-b-white/10 backdrop-blur-md">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center gap-4">
+            <button onClick={onMenuToggle} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white p-1">
+              <Menu className="h-6 w-6" />
+            </button>
+            
+            {/* Desktop Nav for games */}
+            <nav className="hidden md:flex space-x-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => onViewChange(item.id as ViewState)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2
+                    ${currentView === item.id 
+                      ? 'bg-black/10 dark:bg-white/10 text-emerald-600 dark:text-emerald-400' 
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white'}`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Auth & Theme Buttons */}
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={onThemeToggle}
+              className="p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
+            {user ? (
+              <div className="flex items-center gap-3">
+                {user.photoURL && (
+                   <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full border border-emerald-500" />
+                )}
+                <button 
+                  onClick={handleLogout}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium bg-red-500 hover:bg-red-600 text-white transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                <button 
+                  onClick={handleLogin}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium border border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors hidden sm:block"
+                >
+                  Login
+                </button>
+                <button 
+                  onClick={handleLogin}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium bg-emerald-500 text-slate-900 hover:bg-emerald-400 transition-colors"
+                >
+                  Sign Up
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}

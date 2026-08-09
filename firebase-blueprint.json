@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "TypingSession": {
+      "title": "Typing Session",
+      "description": "Records a user's typing session performance.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The user ID of the authenticated user."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["practice", "sprint", "meteor"],
+          "description": "The mode of the typing session."
+        },
+        "wpm": {
+          "type": "number",
+          "description": "Words per minute."
+        },
+        "accuracy": {
+          "type": "number",
+          "description": "Accuracy percentage."
+        },
+        "timeSpent": {
+          "type": "number",
+          "description": "Time spent in seconds."
+        },
+        "errorCount": {
+          "type": "number"
+        },
+        "backspaceCount": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the session was completed."
+        }
+      },
+      "required": ["userId", "mode", "wpm", "accuracy", "timeSpent", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}/sessions/{sessionId}": {
+      "schema": {
+        "$ref": "#/entities/TypingSession"
+      },
+      "description": "Stores typing sessions for a specific user."
+    }
+  }
+}
