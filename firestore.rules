@@ -16,7 +16,7 @@ service cloud.firestore {
     function isValidTypingSession(data) {
       return data.keys().hasAll(['userId', 'mode', 'wpm', 'accuracy', 'timeSpent', 'createdAt']) &&
              data.userId is string && data.userId == request.auth.uid &&
-             data.mode is string && data.mode in ['practice', 'sprint', 'meteor'] &&
+             data.mode is string && data.mode in ['practice', 'sprint', 'meteor', 'bubble'] &&
              data.wpm is number &&
              data.accuracy is number &&
              data.timeSpent is number &&

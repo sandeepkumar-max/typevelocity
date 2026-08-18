@@ -46,6 +46,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
     { id: 'practice', label: 'Practice', icon: Keyboard },
     { id: 'meteor', label: 'Meteor Drop', icon: Play },
     { id: 'sprint', label: 'Neon Sprint', icon: Trophy },
+    { id: 'bubble', label: 'Bubble Shoot', icon: Play },
   ] as const;
 
   return (
@@ -53,10 +54,17 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
-            <button onClick={onMenuToggle} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white p-1">
+            <button onClick={onMenuToggle} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white p-1 md:hidden">
               <Menu className="h-6 w-6" />
             </button>
             
+            <div className="flex items-center cursor-pointer mr-6" onClick={() => onViewChange('home')}>
+              <Keyboard className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
+              <span className="text-xl font-bold tracking-tight hidden sm:block">
+                Type<span className="text-blue-600 dark:text-blue-400">Velocity</span>
+              </span>
+            </div>
+
             {/* Desktop Nav for games */}
             <nav className="hidden md:flex space-x-1">
               {navItems.map((item) => (
@@ -65,7 +73,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
                   onClick={() => onViewChange(item.id as ViewState)}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2
                     ${currentView === item.id 
-                      ? 'bg-black/10 dark:bg-white/10 text-emerald-600 dark:text-emerald-400' 
+                      ? 'bg-black/10 dark:bg-white/10 text-blue-600 dark:text-blue-400' 
                       : 'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white'}`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -87,7 +95,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
             {user ? (
               <div className="flex items-center gap-3">
                 {user.photoURL && (
-                   <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full border border-emerald-500" />
+                   <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full border border-blue-500" />
                 )}
                 <button 
                   onClick={handleLogout}
@@ -100,13 +108,13 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
               <>
                 <button 
                   onClick={handleLogin}
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium border border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors hidden sm:block"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors hidden sm:block"
                 >
                   Login
                 </button>
                 <button 
                   onClick={handleLogin}
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium bg-emerald-500 text-slate-900 hover:bg-emerald-400 transition-colors"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium bg-blue-500 text-slate-900 hover:bg-blue-400 transition-colors"
                 >
                   Sign Up
                 </button>

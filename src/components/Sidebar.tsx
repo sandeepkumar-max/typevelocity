@@ -16,6 +16,7 @@ export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, 
     { id: 'practice', label: 'Practice', icon: Keyboard },
     { id: 'meteor', label: 'Meteor Drop', icon: Play },
     { id: 'sprint', label: 'Neon Sprint', icon: Trophy },
+    { id: 'bubble', label: 'Bubble Shoot', icon: Play },
     { id: 'stats', label: 'Stats', icon: BarChart2 },
     { id: 'about', label: 'About', icon: Info },
     { id: 'help', label: 'Help', icon: HelpCircle },
@@ -42,9 +43,9 @@ export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, 
       `}>
         <div className="p-4 flex items-center justify-between border-b border-white/10 h-16">
           <div className="flex items-center cursor-pointer" onClick={() => { onViewChange('home'); closeSidebar(); }}>
-            <Keyboard className="h-6 w-6 text-emerald-600 dark:text-emerald-400 mr-2" />
+            <Keyboard className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
             <span className="text-xl font-bold tracking-tight">
-              Type<span className="text-emerald-600 dark:text-emerald-400">Velocity</span>
+              Type<span className="text-blue-600 dark:text-blue-400">Velocity</span>
             </span>
           </div>
           <button onClick={closeSidebar} className="text-slate-400 hover:text-white">
@@ -60,13 +61,13 @@ export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, 
               onClick={() => { onViewChange(item.id as ViewState); closeSidebar(); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 currentView === item.id 
-                  ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shadow-[inset_0_0_10px_rgba(16, 185, 129,0.2)]'
+                  ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 shadow-[inset_0_0_10px_rgba(59, 130, 246,0.2)]'
                   : theme === 'light' 
                     ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
             >
-              <item.icon className={`h-5 w-5 ${currentView === item.id ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
+              <item.icon className={`h-5 w-5 ${currentView === item.id ? 'text-blue-600 dark:text-blue-400' : ''}`} />
               {item.label}
             </button>
           ))}

@@ -94,12 +94,12 @@ export default function StatsView({ lastSession, onAction }: StatsViewProps) {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 pb-16">
       {lastSession && (
-        <div className="glass-panel p-6 sm:p-10 rounded-3xl animate-fade-in relative overflow-hidden shadow-xl border border-emerald-500/30">
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 via-amber-500 to-emerald-500 opacity-50"></div>
+        <div className="glass-panel p-6 sm:p-10 rounded-3xl animate-fade-in relative overflow-hidden shadow-xl border border-blue-500/30">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-sky-500 to-blue-500 opacity-50"></div>
           
           <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
              <div>
-               <h2 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-3">
+               <h2 className="text-3xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-3">
                  Session Complete 
                  {isNewRecord && (
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500/20 text-yellow-500 text-sm rounded-full border border-yellow-500/50 animate-bounce">
@@ -112,8 +112,8 @@ export default function StatsView({ lastSession, onAction }: StatsViewProps) {
                </p>
              </div>
              <div className="text-right">
-                <div className="text-5xl font-bold text-white drop-shadow-md">{Math.round(lastSession.wpm)} <span className="text-xl text-slate-500">WPM</span></div>
-                <div className="text-xl text-amber-600 dark:text-amber-400 font-semibold">{Math.round(lastSession.accuracy)}% Accuracy</div>
+                <div className="text-5xl font-bold text-slate-900 dark:text-white drop-shadow-md">{Math.round(lastSession.wpm)} <span className="text-xl text-slate-500">WPM</span></div>
+                <div className="text-xl text-sky-600 dark:text-sky-400 font-semibold">{Math.round(lastSession.accuracy)}% Accuracy</div>
              </div>
           </div>
           
@@ -150,7 +150,7 @@ export default function StatsView({ lastSession, onAction }: StatsViewProps) {
           )}
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-             <button onClick={() => onAction && onAction('restart')} className="px-8 py-3 bg-emerald-500 text-slate-900 rounded-full font-bold hover:bg-emerald-400 transition-colors w-full sm:w-auto shadow-md">
+             <button onClick={() => onAction && onAction('restart')} className="px-8 py-3 bg-blue-500 text-slate-900 rounded-full font-bold hover:bg-blue-400 transition-colors w-full sm:w-auto shadow-md">
                Try Again
              </button>
              <button onClick={() => onAction && onAction('home')} className="px-8 py-3 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-full font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors w-full sm:w-auto shadow-md">
@@ -169,30 +169,70 @@ export default function StatsView({ lastSession, onAction }: StatsViewProps) {
            loading ? (
              <div className="text-center py-12 text-slate-500">Loading history...</div>
            ) : history.length > 0 ? (
-             <div className="h-[400px] w-full">
-               <ResponsiveContainer width="100%" height="100%">
-                 <LineChart data={history.map(s => {
-                   let dateObj = new Date();
-                   if (s.createdAt) {
-                     if (typeof (s.createdAt as any).toDate === 'function') {
-                       dateObj = (s.createdAt as any).toDate();
-                     } else if (typeof s.createdAt === 'number') {
-                       dateObj = new Date(s.createdAt);
+             <div className="flex flex-col gap-12">
+               <div className="h-[400px] w-full">
+                 <ResponsiveContainer width="100%" height="100%">
+                   <LineChart data={history.map(s => {
+                     let dateObj = new Date();
+                     if (s.createdAt) {
+                       if (typeof (s.createdAt as any).toDate === 'function') {
+                         dateObj = (s.createdAt as any).toDate();
+                       } else if (typeof s.createdAt === 'number') {
+                         dateObj = new Date(s.createdAt);
+                       }
                      }
-                   }
-                   return { ...s, date: format(dateObj, 'MMM dd, HH:mm') };
-                 })}>
-                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
-                   <XAxis dataKey="date" stroke="currentColor" opacity={0.5} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                   <YAxis stroke="currentColor" opacity={0.5} axisLine={false} tickLine={false} />
-                   <Tooltip 
-                      contentStyle={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
-                      itemStyle={{ color: '#fff' }}
-                   />
-                   <Line type="monotone" dataKey="wpm" name="WPM" stroke="#10b981" strokeWidth={4} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 8 }} />
-                   <Line type="monotone" dataKey="accuracy" name="Accuracy %" stroke="#f59e0b" strokeWidth={4} dot={{ r: 4, fill: '#f59e0b' }} />
-                 </LineChart>
-               </ResponsiveContainer>
+                     return { ...s, date: format(dateObj, 'MMM dd, HH:mm') };
+                   })}>
+                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
+                     <XAxis dataKey="date" stroke="currentColor" opacity={0.5} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                     <YAxis stroke="currentColor" opacity={0.5} axisLine={false} tickLine={false} />
+                     <Tooltip 
+                        contentStyle={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
+                        itemStyle={{ color: '#fff' }}
+                     />
+                     <Line type="monotone" dataKey="wpm" name="WPM" stroke="#3b82f6" strokeWidth={4} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 8 }} />
+                     <Line type="monotone" dataKey="accuracy" name="Accuracy %" stroke="#0ea5e9" strokeWidth={4} dot={{ r: 4, fill: '#0ea5e9' }} />
+                   </LineChart>
+                 </ResponsiveContainer>
+               </div>
+               
+               <div>
+                 <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-200">Recent Sessions</h3>
+                 <div className="overflow-x-auto">
+                   <table className="w-full text-left border-collapse">
+                     <thead>
+                       <tr className="border-b border-slate-200 dark:border-slate-800">
+                         <th className="p-3 text-sm font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                         <th className="p-3 text-sm font-semibold text-slate-500 uppercase tracking-wider">Mode</th>
+                         <th className="p-3 text-sm font-semibold text-slate-500 uppercase tracking-wider">WPM</th>
+                         <th className="p-3 text-sm font-semibold text-slate-500 uppercase tracking-wider">Accuracy</th>
+                         <th className="p-3 text-sm font-semibold text-slate-500 uppercase tracking-wider">Time</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {[...history].reverse().slice(0, 10).map((s, i) => {
+                         let dateObj = new Date();
+                         if (s.createdAt) {
+                           if (typeof (s.createdAt as any).toDate === 'function') {
+                             dateObj = (s.createdAt as any).toDate();
+                           } else if (typeof s.createdAt === 'number') {
+                             dateObj = new Date(s.createdAt);
+                           }
+                         }
+                         return (
+                           <tr key={i} className="border-b border-slate-200/50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                             <td className="p-3 text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap">{format(dateObj, 'MMM dd, HH:mm')}</td>
+                             <td className="p-3 text-sm capitalize text-slate-700 dark:text-slate-300">{s.mode}</td>
+                             <td className="p-3 text-sm font-bold text-slate-900 dark:text-slate-100">{Math.round(s.wpm)}</td>
+                             <td className="p-3 text-sm font-bold text-slate-700 dark:text-slate-300">{Math.round(s.accuracy)}%</td>
+                             <td className="p-3 text-sm text-slate-600 dark:text-slate-400">{s.timeSpent}s</td>
+                           </tr>
+                         )
+                       })}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
              </div>
            ) : (
              <div className="text-center py-12 text-slate-500">No session history found. Complete a practice session to see your progress!</div>

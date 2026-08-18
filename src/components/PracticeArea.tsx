@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameSettings, SessionStats } from '../types';
 import { generateText } from '../utils/words';
+import { mapKeystroke } from '../utils/keyboardMap';
 import SettingsBar from './SettingsBar';
 import { playKeystrokeSound, playErrorSound, playSuccessSound } from '../utils/audio';
+import { RotateCcw } from 'lucide-react';
 
 interface PracticeAreaProps {
   settings: GameSettings;
@@ -20,9 +22,14 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
   const [errorCount, setErrorCount] = useState(0);
   const [backspaceCount, setBackspaceCount] = useState(0);
   
+  const totalTypedRef = useRef(0);
+  const errorCountRef = useRef(0);
+  
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
+  const [offsetY, setOffsetY] = useState(0);
+  const textContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize text
   useEffect(() => {
@@ -31,7 +38,7 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
 
   const resetTest = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    setTargetText(generateText(settings.difficulty, 50, settings.easyCase));
+    setTargetText(generateText(settings.difficulty, 50, settings.easyCase, settings.language, settings.hindiFont));
     setUserInput('');
     setStatus('idle');
     setTimeLeft(settings.time);
@@ -39,26 +46,56 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
     setAccuracy(100);
     setErrorCount(0);
     setBackspaceCount(0);
+    setOffsetY(0);
+    totalTypedRef.current = 0;
+    errorCountRef.current = 0;
     if (inputRef.current) inputRef.current.focus();
   }, [settings]);
 
   // Handle typing
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+       e.preventDefault();
+       resetTest();
+       return;
+    }
+
+    if (e.key === 'Backspace') {
+       if (settings.backspaceLock) {
+         e.preventDefault();
+         return;
+       }
+       setBackspaceCount(prev => prev + 1);
+       if (userInput.length > 0) {
+         e.preventDefault();
+         setUserInput(prev => prev.slice(0, -1));
+       }
+       return;
+    }
+
+    // Ignore modifiers
+    if (e.ctrlKey || e.altKey || e.metaKey || e.key.length > 1) {
+       return;
+    }
+
+    e.preventDefault(); // Stop native input behavior to avoid auto-correct/IME interference
+    
     if (status === 'finished') return;
     
-    const val = e.target.value;
+    const mappedKey = mapKeystroke(e.key, settings.language, settings.hindiFont);
+    const val = userInput + mappedKey;
     
     if (val.length > targetText.length) return;
-
     if (status === 'idle') {
       setStatus('running');
     }
 
     if (val.length > userInput.length) {
-       // Char typed
+       totalTypedRef.current += 1;
        const lastChar = val[val.length - 1];
        const expectedChar = targetText[val.length - 1];
        if (lastChar !== expectedChar) {
+          errorCountRef.current += 1;
           setErrorCount(prev => prev + 1);
           if (settings.soundEnabled) playErrorSound();
        } else {
@@ -69,15 +106,13 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
     setUserInput(val);
     calculateStats(val, timeLeft);
 
-    if (val.length === targetText.length) {
-      endTest(val, timeLeft);
+    if (targetText.length - val.length < 100) {
+       setTargetText(prev => prev + ' ' + generateText(settings.difficulty, 50, settings.easyCase, settings.language, settings.hindiFont));
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-       setBackspaceCount(prev => prev + 1);
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Handled by keydown now to bypass IME/autocorrect
   };
 
   const endTest = (finalInput: string = userInput, finalTimeLeft: number = timeLeft) => {
@@ -89,7 +124,10 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
        const correctChars = finalInput.split('').filter((c, i) => c === targetText[i]).length;
        const timeSpent = settings.time - finalTimeLeft;
        const finalWpm = timeSpent > 0 ? Math.round((correctChars / 5) / (timeSpent / 60)) : 0;
-       const finalAccuracy = finalInput.length === 0 ? 100 : Math.round((correctChars / finalInput.length) * 100);
+       
+       const total = totalTypedRef.current;
+       const errors = errorCountRef.current;
+       const finalAccuracy = total === 0 ? 100 : Math.max(0, Math.round(((total - errors) / total) * 100));
        
        onComplete({
          mode: 'practice',
@@ -110,7 +148,9 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
       if (input[i] === targetText[i]) correctChars++;
     }
 
-    const accuracyVal = input.length === 0 ? 100 : Math.round((correctChars / input.length) * 100);
+    const total = totalTypedRef.current;
+    const errors = errorCountRef.current;
+    const accuracyVal = total === 0 ? 100 : Math.max(0, Math.round(((total - errors) / total) * 100));
     setAccuracy(accuracyVal);
 
     const timeElapsedMinutes = (settings.time - currentLeft) / 60;
@@ -149,18 +189,54 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, status]);
 
-  // Scroll cursor into view when typing
+  // Track cursor position to keep active line centered
   useEffect(() => {
-    if (cursorRef.current && status === 'running') {
-      cursorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!settings.autoScroll) {
+      setOffsetY(0);
+      if (cursorRef.current && status === 'running') {
+        cursorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
     }
-  }, [userInput, status]);
+
+    if (cursorRef.current && textContainerRef.current && status !== 'finished') {
+      const container = textContainerRef.current;
+      const cursor = cursorRef.current;
+      
+      const lineHeight = cursor.offsetHeight || 32;
+      const cursorTop = cursor.offsetTop;
+      
+      const firstSpan = container.querySelector('span');
+      const baseOffset = firstSpan ? firstSpan.offsetTop : 0;
+      
+      const containerHeight = container.clientHeight;
+      const centerOfContainer = (containerHeight / 2) - (lineHeight / 2);
+      
+      const targetOffsetY = centerOfContainer - (cursorTop - baseOffset);
+      
+      // Prevent scrolling down beyond the first line (so the first line starts at the top if autoScroll is on but we don't want it centered initially)
+      // Actually the previous logic centered the first line. If we want that, we keep it. 
+      // Let's just use the calculated offset.
+      setOffsetY(targetOffsetY);
+    }
+  }, [userInput, status, settings.autoScroll]);
 
   // Render text with highlighting
   const renderText = () => {
     return (
-      <div className="font-fira text-lg sm:text-2xl leading-relaxed tracking-wide whitespace-pre-wrap select-none" onClick={() => inputRef.current?.focus()}>
-        {targetText.split('').map((char, index) => {
+      <div 
+        ref={textContainerRef}
+        className={`w-full select-none ${settings.autoScroll ? 'h-full overflow-hidden [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)] [mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)]' : ''}`} 
+        onClick={() => inputRef.current?.focus()}
+      >
+        <div 
+          className={`${settings.language === 'hindi' ? '' : (settings.fontFamily || 'font-fira')} text-lg sm:text-2xl leading-relaxed tracking-wide whitespace-pre-wrap transition-transform duration-200 ease-out`}
+          style={{ 
+            transform: `translateY(${offsetY}px)`,
+            fontFamily: settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? "'Kruti Dev 010', 'Kruti Dev', sans-serif" : "'Mangal', sans-serif") : undefined
+          }}
+        >
+          {targetText.split('').map((char, index) => {
           let colorClass = 'text-slate-500'; // un-typed
           let borderClass = '';
           let isCursor = false;
@@ -171,7 +247,7 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
           
           // Cursor
           if (index === userInput.length && status !== 'finished') {
-            borderClass = 'border-l-2 border-emerald-500 animate-pulse';
+            borderClass = 'border-l-2 border-blue-500 animate-pulse';
             colorClass = 'text-slate-800 dark:text-slate-300'; // Current char to type
             isCursor = true;
           }
@@ -186,6 +262,7 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
             </span>
           );
         })}
+        </div>
       </div>
     );
   };
@@ -198,7 +275,7 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
       <div className="flex justify-between w-full mb-4 sm:mb-8 glass-panel px-4 sm:px-6 py-3 sm:py-4 rounded-xl">
         <div className="flex flex-col">
           <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm uppercase tracking-wider">WPM</span>
-          <span className="text-2xl sm:text-4xl font-bold text-emerald-600 dark:text-emerald-400">{wpm}</span>
+          <span className="text-2xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400">{wpm}</span>
         </div>
         <div className="flex flex-col items-center">
           <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm uppercase tracking-wider">Time</span>
@@ -208,19 +285,19 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
         </div>
         <div className="flex flex-col items-end">
           <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm uppercase tracking-wider">Accuracy</span>
-          <span className="text-2xl sm:text-4xl font-bold text-amber-600 dark:text-amber-400">{accuracy}%</span>
+          <span className="text-2xl sm:text-4xl font-bold text-sky-600 dark:text-sky-400">{accuracy}%</span>
         </div>
       </div>
 
       {/* Typing Area */}
-      <div className="w-full glass-panel p-4 sm:p-8 rounded-2xl relative h-64 sm:h-80 overflow-y-auto cursor-text" onClick={() => inputRef.current?.focus()}>
+      <div className={`w-full glass-panel p-4 sm:p-8 rounded-2xl relative h-64 sm:h-80 ${settings.autoScroll ? 'overflow-hidden' : 'overflow-y-auto'} cursor-text`} onClick={() => inputRef.current?.focus()}>
         <input
           ref={inputRef}
           type="text"
           value={userInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="absolute opacity-0 w-[1px] h-[1px] -z-10"
+          className="fixed opacity-0 pointer-events-none -z-10 w-[1px] h-[1px]"
           style={{ top: '50%', left: '50%' }}
           autoComplete="off"
           autoCorrect="off"
@@ -233,15 +310,27 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
         {status === 'finished' && (
           <div className="absolute inset-0 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center animate-in fade-in z-20">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">Test Complete!</h2>
-            <p className="text-slate-600 dark:text-slate-300 mb-6 text-center px-4">You typed at <span className="text-emerald-600 dark:text-emerald-400 font-bold">{wpm} WPM</span> with <span className="text-amber-600 dark:text-amber-400 font-bold">{accuracy}%</span> accuracy.</p>
+            <p className="text-slate-600 dark:text-slate-300 mb-6 text-center px-4">You typed at <span className="text-blue-600 dark:text-blue-400 font-bold">{wpm} WPM</span> with <span className="text-sky-600 dark:text-sky-400 font-bold">{accuracy}%</span> accuracy.</p>
             <button
               onClick={resetTest}
-              className="px-6 py-2 sm:px-8 sm:py-3 bg-emerald-500 text-slate-900 rounded-full font-bold hover:bg-emerald-400 hover:scale-105 transition-all shadow-[0_0_15px_rgba(16, 185, 129,0.4)]"
+              className="px-6 py-2 sm:px-8 sm:py-3 bg-blue-500 text-slate-900 rounded-full font-bold hover:bg-blue-400 hover:scale-105 transition-all shadow-[0_0_15px_rgba(59, 130, 246,0.4)]"
             >
               Try Again
             </button>
           </div>
         )}
+      </div>
+
+      {/* Restart Control */}
+      <div className="mt-8 flex justify-center w-full opacity-60 hover:opacity-100 transition-opacity">
+        <button 
+          onClick={resetTest}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-200/50 hover:bg-slate-200 dark:bg-slate-800/50 dark:hover:bg-slate-700 transition-all font-medium text-sm border border-slate-300/50 dark:border-slate-700/50"
+          title="Restart Test (Esc)"
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span>Restart Test (Esc)</span>
+        </button>
       </div>
     </div>
   );

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import Footer from './components/Footer';
 import { ViewState, GameSettings, SessionStats } from './types';
 import PracticeArea from './components/PracticeArea';
 import MeteorDrop from './components/MeteorDrop';
+import BubbleShoot from './components/BubbleShoot';
 import NeonSprint from './components/NeonSprint';
 import StatsView from './components/StatsView';
 import { auth, db } from './lib/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { Keyboard } from 'lucide-react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home');
@@ -15,7 +18,12 @@ export default function App() {
     difficulty: 'easy',
     time: 30,
     easyCase: 'lower',
-    soundEnabled: true
+    soundEnabled: true,
+    backspaceLock: false,
+    autoScroll: true,
+    fontFamily: 'font-fira',
+    language: 'english',
+    hindiFont: 'mangal'
   });
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -51,10 +59,41 @@ export default function App() {
   const renderContent = () => {
     switch (currentView) {
       case 'home': return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center max-w-4xl mx-auto space-y-6">
-           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-4">Master Your <span className="text-emerald-600 dark:text-emerald-400">Keystrokes</span></h1>
-           <p className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-2xl">Enhance your typing speed and accuracy through engaging exercises, competitive sprints, and meteor drop challenges.</p>
-           <button onClick={() => setCurrentView('practice')} className="mt-8 px-8 py-4 bg-emerald-500 text-slate-900 rounded-full font-bold text-lg hover:bg-emerald-400 hover:scale-105 transition-all shadow-[0_0_15px_rgba(16, 185, 129,0.4)]">Start Practicing</button>
+        <div className="flex flex-col xl:flex-row items-center justify-between min-h-[70vh] max-w-7xl mx-auto gap-12 xl:gap-8 px-4 py-8 xl:py-0">
+           
+           <div className="flex-1 flex flex-col items-center xl:items-start text-center xl:text-left space-y-8 z-10">
+             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium text-sm border border-blue-500/20 shadow-sm backdrop-blur-sm">
+               <span className="relative flex h-2 w-2">
+                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+               </span>
+               New: Meteor Drop & Neon Sprint modes available!
+             </div>
+             <h1 className="text-5xl sm:text-6xl xl:text-7xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1]">
+               Type Faster, <br className="hidden sm:block" />
+               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-sky-400">Think Clearer.</span>
+             </h1>
+             <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed">
+               TypeVelocity is a professional typing platform designed to enhance your speed and accuracy. Gamified exercises, competitive sprints, and detailed analytics.
+             </p>
+             
+             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
+               <button onClick={() => setCurrentView('practice')} className="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg hover:bg-blue-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2">
+                 Start Typing <Keyboard className="w-5 h-5" />
+               </button>
+               <button onClick={() => setCurrentView('about')} className="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-full font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center">
+                 Learn More
+               </button>
+             </div>
+           </div>
+           
+           <div className="flex-1 w-full max-w-2xl xl:max-w-none relative group perspective-1000">
+             <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 to-sky-400 rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-700"></div>
+             <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 relative transform xl:-rotate-y-6 group-hover:rotate-y-0 transition-transform duration-700">
+               <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent z-10 pointer-events-none mix-blend-overlay"></div>
+               <img src="https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1200&q=80" alt="Mechanical Keyboard" className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-1000" />
+             </div>
+           </div>
         </div>
       );
       case 'about': return (
@@ -63,15 +102,15 @@ export default function App() {
            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">TypeVelocity is a next-generation typing trainer designed to make improving your typing speed fun and effective. We combine aesthetic UI with real-time feedback and engaging gamified experiences.</p>
            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
               <div className="p-4 bg-black/5 dark:bg-white/5 rounded-xl border border-black/10 dark:border-white/10">
-                 <h3 className="font-bold text-emerald-600 dark:text-emerald-400 mb-2">Practice</h3>
+                 <h3 className="font-bold text-blue-600 dark:text-blue-400 mb-2">Practice</h3>
                  <p className="text-sm text-slate-600 dark:text-slate-400">Classic typing tests to accurately measure your WPM and accuracy.</p>
               </div>
               <div className="p-4 bg-black/5 dark:bg-white/5 rounded-xl border border-black/10 dark:border-white/10">
-                 <h3 className="font-bold text-emerald-600 dark:text-emerald-400 mb-2">Meteor Drop</h3>
+                 <h3 className="font-bold text-blue-600 dark:text-blue-400 mb-2">Meteor Drop</h3>
                  <p className="text-sm text-slate-600 dark:text-slate-400">Defend against falling words in this fast-paced survival mode.</p>
               </div>
               <div className="p-4 bg-black/5 dark:bg-white/5 rounded-xl border border-black/10 dark:border-white/10">
-                 <h3 className="font-bold text-emerald-600 dark:text-emerald-400 mb-2">Neon Sprint</h3>
+                 <h3 className="font-bold text-blue-600 dark:text-blue-400 mb-2">Neon Sprint</h3>
                  <p className="text-sm text-slate-600 dark:text-slate-400">Race against the clock in short, high-intensity typing bursts.</p>
               </div>
            </div>
@@ -82,11 +121,11 @@ export default function App() {
            <h2 className="text-3xl font-bold">Help & Support</h2>
            <div className="space-y-4">
               <div className="p-4 border border-black/10 dark:border-white/10 rounded-lg">
-                 <h3 className="font-bold text-lg mb-2 text-amber-600 dark:text-amber-400">How do I start a test?</h3>
+                 <h3 className="font-bold text-lg mb-2 text-sky-600 dark:text-sky-400">How do I start a test?</h3>
                  <p className="text-slate-600 dark:text-slate-400">Navigate to Practice, Meteor Drop, or Neon Sprint using the sidebar or header menu. Simply start typing to begin the challenge automatically.</p>
               </div>
               <div className="p-4 border border-black/10 dark:border-white/10 rounded-lg">
-                 <h3 className="font-bold text-lg mb-2 text-amber-600 dark:text-amber-400">What is WPM?</h3>
+                 <h3 className="font-bold text-lg mb-2 text-sky-600 dark:text-sky-400">What is WPM?</h3>
                  <p className="text-slate-600 dark:text-slate-400">WPM stands for Words Per Minute. It calculates your typing speed based on the standard of 5 characters per word.</p>
               </div>
            </div>
@@ -98,23 +137,24 @@ export default function App() {
            <form className="space-y-4 max-w-md" onSubmit={(e) => e.preventDefault()}>
               <div>
                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
-                 <input type="text" className="w-full bg-white dark:bg-transparent border border-slate-300 dark:border-white/20 rounded-lg px-4 py-2 focus:border-emerald-500 outline-none text-slate-900 dark:text-white" />
+                 <input type="text" className="w-full bg-white dark:bg-transparent border border-slate-300 dark:border-white/20 rounded-lg px-4 py-2 focus:border-blue-500 outline-none text-slate-900 dark:text-white" />
               </div>
               <div>
                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                 <input type="email" className="w-full bg-white dark:bg-transparent border border-slate-300 dark:border-white/20 rounded-lg px-4 py-2 focus:border-emerald-500 outline-none text-slate-900 dark:text-white" />
+                 <input type="email" className="w-full bg-white dark:bg-transparent border border-slate-300 dark:border-white/20 rounded-lg px-4 py-2 focus:border-blue-500 outline-none text-slate-900 dark:text-white" />
               </div>
               <div>
                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Message</label>
-                 <textarea rows={4} className="w-full bg-white dark:bg-transparent border border-slate-300 dark:border-white/20 rounded-lg px-4 py-2 focus:border-emerald-500 outline-none text-slate-900 dark:text-white"></textarea>
+                 <textarea rows={4} className="w-full bg-white dark:bg-transparent border border-slate-300 dark:border-white/20 rounded-lg px-4 py-2 focus:border-blue-500 outline-none text-slate-900 dark:text-white"></textarea>
               </div>
-              <button className="px-6 py-2 bg-emerald-500 text-slate-900 rounded-lg font-bold hover:bg-emerald-400 transition-colors w-full sm:w-auto">Send Message</button>
+              <button className="px-6 py-2 bg-blue-500 text-slate-900 rounded-lg font-bold hover:bg-blue-400 transition-colors w-full sm:w-auto">Send Message</button>
            </form>
         </div>
       );
       case 'practice': return <PracticeArea settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
       case 'meteor': return <MeteorDrop settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
       case 'sprint': return <NeonSprint settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
+      case 'bubble': return <BubbleShoot settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
       case 'stats': return <StatsView lastSession={lastSession} onAction={(action) => {
         if (action === 'home') setCurrentView('home');
         if (action === 'restart') {
@@ -128,8 +168,8 @@ export default function App() {
   return (
     <div className={`min-h-screen relative overflow-hidden flex ${themeClasses} ${theme === 'light' ? 'light-theme' : ''}`}>
       {/* Abstract Background Gradients */}
-      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-amber-500/20 blur-[120px] pointer-events-none"></div>
-      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[120px] pointer-events-none"></div>
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-sky-500/20 blur-[120px] pointer-events-none"></div>
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none"></div>
 
       <Sidebar 
         currentView={currentView} 
@@ -151,6 +191,7 @@ export default function App() {
         <main className="flex-grow flex flex-col py-8 px-4 sm:px-6 lg:px-8 w-full">
           {renderContent()}
         </main>
+        <Footer onViewChange={setCurrentView} />
       </div>
     </div>
   );

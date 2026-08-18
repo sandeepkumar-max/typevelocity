@@ -1,230 +1,287 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GameSettings, SessionStats } from '../types';
 import { generateText } from '../utils/words';
-import { playKeystrokeSound, playErrorSound, playSuccessSound } from '../utils/audio';
+import { mapKeystroke } from '../utils/keyboardMap';
+import SettingsBar from './SettingsBar';
+import { RotateCcw } from 'lucide-react';
 
 interface NeonSprintProps {
   settings: GameSettings;
   onSettingsChange: (settings: GameSettings) => void;
-  onComplete?: (stats: SessionStats) => void;
+  onComplete: (stats: SessionStats) => void;
 }
 
-export default function NeonSprint({ settings, onComplete }: NeonSprintProps) {
+export default function NeonSprint({ settings, onSettingsChange, onComplete }: NeonSprintProps) {
   const [targetText, setTargetText] = useState('');
   const [userInput, setUserInput] = useState('');
   const [status, setStatus] = useState<'idle' | 'running' | 'finished'>('idle');
+  const [startTime, setStartTime] = useState<number | null>(null);
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(100);
-  const [progress, setProgress] = useState(0);
+  const [errors, setErrors] = useState(0);
+  const [lastTypeTime, setLastTypeTime] = useState<number>(0);
   const [isIdle, setIsIdle] = useState(false);
-  const [errorCount, setErrorCount] = useState(0);
-  const [backspaceCount, setBackspaceCount] = useState(0);
   
-  const startTimeRef = useRef<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const textContainerRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
-  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const [offsetY, setOffsetY] = useState(0);
 
   useEffect(() => {
-    resetGame();
-    return () => {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    };
-  }, [settings]);
-
-  const resetGame = useCallback(() => {
-    setTargetText(generateText(settings.difficulty, 30, settings.easyCase));
+    // Generate around 50 words for sprint mode
+    setTargetText(generateText(settings.difficulty, 50, settings.easyCase, settings.language, settings.hindiFont));
     setUserInput('');
     setStatus('idle');
-    setWpm(0);
-    setAccuracy(100);
-    setProgress(0);
-    setIsIdle(false);
-    setErrorCount(0);
-    setBackspaceCount(0);
-    startTimeRef.current = null;
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    if (inputRef.current) inputRef.current.focus();
-  }, [settings]);
+  }, [settings.difficulty, settings.easyCase, settings.language, settings.hindiFont]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (status === 'finished') return;
-    const val = e.target.value;
-    
-    if (val.length > targetText.length) return;
-
+  useEffect(() => {
     if (status === 'idle') {
+      inputRef.current?.focus();
+    }
+  }, [status]);
+
+  // Idle check
+  useEffect(() => {
+    if (status === 'running') {
+      const interval = setInterval(() => {
+        if (Date.now() - lastTypeTime > 3000) {
+          setIsIdle(true);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [status, lastTypeTime]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      resetGame();
+      return;
+    }
+
+    if (e.key === 'Backspace') {
+       if (settings.backspaceLock) {
+         e.preventDefault();
+         return;
+       }
+       if (userInput.length > 0) {
+         e.preventDefault();
+         setUserInput(prev => prev.slice(0, -1));
+       }
+       return;
+    }
+
+    if (e.ctrlKey || e.altKey || e.metaKey || e.key.length > 1) {
+       return;
+    }
+
+    e.preventDefault();
+
+    let currentStatus = status;
+    if (currentStatus === 'idle') {
       setStatus('running');
-      startTimeRef.current = Date.now();
+      setStartTime(Date.now());
+      setLastTypeTime(Date.now());
+      currentStatus = 'running';
+    }
+    
+    if (currentStatus !== 'running') return;
+    
+    setLastTypeTime(Date.now());
+    setIsIdle(false);
+    
+    const mappedKey = mapKeystroke(e.key, settings.language, settings.hindiFont);
+    const val = userInput + mappedKey;
+    
+    if (settings.soundEnabled) {
+      // play click sound
     }
 
     if (val.length > userInput.length) {
-       const lastChar = val[val.length - 1];
-       const expectedChar = targetText[val.length - 1];
-       if (lastChar !== expectedChar) {
-          setErrorCount(prev => prev + 1);
-          if (settings.soundEnabled) playErrorSound();
-       } else {
-          if (settings.soundEnabled) playKeystrokeSound();
-       }
+      const newChar = val[val.length - 1];
+      const targetChar = targetText[val.length - 1];
+      if (newChar !== targetChar) {
+        setErrors(prev => prev + 1);
+      }
     }
 
     setUserInput(val);
-    
-    // Idle logic
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    setIsIdle(false);
-    if (val.length < targetText.length) {
-      idleTimerRef.current = setTimeout(() => {
-        setIsIdle(true);
-      }, 2000);
-    }
 
-    // Calculate correct characters
-    let correct = 0;
-    for(let i=0; i<val.length; i++) {
-      if(val[i] === targetText[i]) correct++;
-    }
-    
-    const newProgress = Math.min(100, (val.length / targetText.length) * 100);
-    setProgress(newProgress);
-    
-    const currentAccuracy = val.length === 0 ? 100 : Math.round((correct / val.length) * 100);
-    setAccuracy(currentAccuracy);
-
-    // Live WPM
-    let currentWpm = wpm;
-    if (startTimeRef.current) {
-      const minutesElapsed = (Date.now() - startTimeRef.current) / 60000;
-      if (minutesElapsed > 0) {
-        currentWpm = Math.round((correct / 5) / minutesElapsed);
-        setWpm(currentWpm);
+    if (startTime) {
+      const timeSpent = (Date.now() - startTime) / 1000;
+      const minutes = timeSpent / 60;
+      if (minutes > 0) {
+        setWpm(Math.round((val.length / 5) / minutes));
       }
+      
+      const currentErrors = errors + (val.length > userInput.length && val[val.length - 1] !== targetText[val.length - 1] ? 1 : 0);
+      const acc = Math.round(((val.length - currentErrors) / val.length) * 100);
+      setAccuracy(isNaN(acc) ? 100 : Math.max(0, acc));
     }
 
     if (val.length === targetText.length) {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-      setStatus('finished');
-      if (settings.soundEnabled) playSuccessSound();
-      
-      if (onComplete) {
-         const timeSpent = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
-         onComplete({
-           mode: 'sprint',
-           wpm: currentWpm,
-           accuracy: currentAccuracy,
-           timeSpent,
-           errorCount,
-           backspaceCount,
-           wordStats: {},
-           letterStats: {}
-         });
-      }
+      finishRace();
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-       setBackspaceCount(prev => prev + 1);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Handled by keydown
+  };
+
+  const finishRace = () => {
+    setStatus('finished');
+    const timeSpent = startTime ? (Date.now() - startTime) / 1000 : 0;
+    if (onComplete) {
+      onComplete({
+        mode: 'sprint',
+        wpm,
+        accuracy,
+        timeSpent,
+        errorCount: errors,
+        backspaceCount: 0,
+        wordStats: {},
+        letterStats: {}
+      });
     }
   };
 
-  // Scroll cursor into view
+  const resetGame = () => {
+    setTargetText(generateText(settings.difficulty, 50, settings.easyCase, settings.language, settings.hindiFont));
+    setUserInput('');
+    setStatus('idle');
+    setStartTime(null);
+    setWpm(0);
+    setAccuracy(100);
+    setErrors(0);
+    setOffsetY(0);
+    setIsIdle(false);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  const progress = targetText.length > 0 ? (userInput.length / targetText.length) * 100 : 0;
+
+  // Auto-scroll logic
   useEffect(() => {
-    if (cursorRef.current && status === 'running') {
-      cursorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (settings.autoScroll && textContainerRef.current && cursorRef.current && status === 'running') {
+      const container = textContainerRef.current;
+      const cursor = cursorRef.current;
+      
+      const lineHeight = parseFloat(window.getComputedStyle(cursor).lineHeight) || 32;
+      const cursorTop = cursor.offsetTop;
+      
+      const firstSpan = container.querySelector('span');
+      const baseOffset = firstSpan ? firstSpan.offsetTop : 0;
+      
+      const containerHeight = container.clientHeight;
+      const centerOfContainer = (containerHeight / 2) - (lineHeight / 2);
+      
+      const targetOffsetY = centerOfContainer - (cursorTop - baseOffset);
+      
+      setOffsetY(targetOffsetY);
     }
-  }, [userInput, status]);
+  }, [userInput, status, settings.autoScroll]);
 
   const renderText = () => {
     return (
-      <div className="font-fira text-lg sm:text-xl leading-relaxed tracking-wide whitespace-pre-wrap select-none mt-4 sm:mt-8 p-4 sm:p-6 glass-panel rounded-xl h-48 sm:h-64 overflow-y-auto">
-        {targetText.split('').map((char, index) => {
-          let colorClass = 'text-slate-500';
-          let borderClass = '';
-          let isCursor = false;
-          
-          if (index < userInput.length) {
-            colorClass = userInput[index] === char ? 'text-slate-800 dark:text-slate-300' : 'text-red-500 bg-red-500/20';
-          }
-          
-          if (index === userInput.length && status !== 'finished') {
-            borderClass = 'border-l-2 border-amber-500 animate-pulse';
-            colorClass = 'text-slate-900 dark:text-white';
-            isCursor = true;
-          }
+      <div className={`mt-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl h-64 relative ${settings.autoScroll ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <div 
+          ref={textContainerRef}
+          className={`w-full select-none ${settings.autoScroll ? 'h-full overflow-hidden [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)] [mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)]' : ''}`}
+        >
+          <div 
+            className={`${settings.language === 'hindi' ? '' : (settings.fontFamily || 'font-fira')} text-xl leading-relaxed tracking-wide whitespace-pre-wrap transition-transform duration-200 ease-out`}
+            style={{ 
+              transform: `translateY(${offsetY}px)`,
+              fontFamily: settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? "'Kruti Dev 010', 'Kruti Dev', sans-serif" : "'Mangal', sans-serif") : undefined
+            }}
+          >
+            {targetText.split('').map((char, index) => {
+            let colorClass = 'text-slate-400 dark:text-slate-600';
+            let borderClass = '';
+            let isCursor = false;
+            
+            if (index < userInput.length) {
+              colorClass = userInput[index] === char ? 'text-slate-800 dark:text-slate-200' : 'text-red-500 bg-red-500/10 rounded-sm';
+            }
+            
+            if (index === userInput.length && status !== 'finished') {
+              borderClass = 'border-l-2 border-blue-500 animate-pulse';
+              colorClass = 'text-slate-900 dark:text-white';
+              isCursor = true;
+            }
 
-          return (
-            <span 
-              key={index} 
-              ref={isCursor ? cursorRef : null}
-              className={`transition-colors ${colorClass} ${borderClass}`}
-            >
-              {char}
-            </span>
-          );
-        })}
+            return (
+              <span 
+                key={index} 
+                ref={isCursor ? cursorRef : null}
+                className={`transition-colors ${colorClass} ${borderClass}`}
+              >
+                {char}
+              </span>
+            );
+          })}
+          </div>
+        </div>
       </div>
     );
   };
 
   return (
     <div className="flex flex-col items-center w-full max-w-4xl mx-auto min-h-[500px]">
-      
+      <SettingsBar settings={settings} onSettingsChange={onSettingsChange} disabled={status === 'running'} />
       {/* HUD */}
-      <div className="flex justify-between w-full mb-4 sm:mb-8 glass-panel px-4 sm:px-6 py-3 sm:py-4 rounded-xl">
+      <div className="flex justify-between w-full mb-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-4 rounded-2xl">
         <div className="flex flex-col">
-          <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm uppercase tracking-wider">Speed</span>
-          <span className="text-2xl sm:text-4xl font-bold text-emerald-600 dark:text-emerald-400">{wpm} WPM</span>
+          <span className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Speed</span>
+          <span className="text-3xl font-bold text-blue-500">{wpm} WPM</span>
         </div>
         <div className="flex flex-col items-center hidden sm:flex">
-          <span className="text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wider">Accuracy</span>
-          <span className="text-4xl font-bold text-slate-800 dark:text-white">{accuracy}%</span>
+          <span className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Accuracy</span>
+          <span className="text-3xl font-bold text-slate-800 dark:text-slate-200">{accuracy}%</span>
         </div>
         <div className="flex flex-col items-end">
-          <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm uppercase tracking-wider">Progress</span>
-          <span className="text-2xl sm:text-4xl font-bold text-amber-600 dark:text-amber-400">{Math.round(progress)}%</span>
+          <span className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Progress</span>
+          <span className="text-3xl font-bold text-indigo-500">{Math.round(progress)}%</span>
         </div>
       </div>
 
-      {/* Track & Car */}
-      <div className="w-full h-24 sm:h-32 relative mb-4 sm:mb-8 rounded-xl overflow-hidden glass-panel border-b-4 border-b-slate-400 dark:border-b-slate-700">
-        {/* Moving background lines effect */}
+      {/* Clean Flat Track & Car */}
+      <div className="w-full h-16 sm:h-20 relative mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center">
+        
+        {/* Flat background track lines */}
         <div 
-          className="absolute inset-0 opacity-20"
+          className="absolute inset-0 opacity-10"
           style={{
-            backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 40px, #00E5FF 40px, #00E5FF 80px)',
+            backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 20px, currentColor 20px, currentColor 40px)',
             backgroundSize: '200% 100%',
             animation: status === 'running' && !isIdle ? `moveBg ${Math.max(0.5, 3 - wpm/50)}s linear infinite` : 'none'
           }}
         />
         
-        {/* The Car */}
+        {/* Flat Minimal Car */}
         <div 
-          className="absolute bottom-2 transition-all duration-300 ease-out z-10"
-          style={{ left: `calc(${progress}% - 40px)` }}
+          className="absolute transition-all duration-300 ease-out z-10 flex items-center justify-center"
+          style={{ left: `calc(${progress}% - 30px)` }}
         >
-          <div className="w-20 h-8 bg-emerald-500 rounded-t-lg rounded-br-lg relative shadow-[0_0_20px_rgba(16, 185, 129,0.6)]">
+          <div className="w-16 h-6 bg-blue-500 rounded-md relative flex items-center justify-end px-1">
+             {/* Flat Details */}
+             <div className="w-4 h-3 bg-white/20 rounded-sm"></div>
              {/* Exhaust */}
              {status === 'running' && !isIdle && (
-                <div className="absolute left-[-20px] bottom-1 w-6 h-2 bg-orange-500 rounded-full animate-pulse blur-[2px]" />
+                <div className="absolute left-[-12px] w-3 h-1.5 bg-orange-400 rounded-full animate-pulse" />
              )}
-             {/* Windows */}
-             <div className="absolute top-1 right-2 w-8 h-4 bg-[#0F172A] rounded-tr-sm" />
-             {/* Wheels */}
-             <div className="absolute -bottom-2 left-2 w-4 h-4 bg-slate-900 rounded-full border border-slate-600" />
-             <div className="absolute -bottom-2 right-2 w-4 h-4 bg-slate-900 rounded-full border border-slate-600" />
           </div>
         </div>
         
         {/* Finish Line */}
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzAwMCIvPjxyZWN0IHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMwMDAiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] opacity-50 border-l border-white/20" />
+        <div className="absolute right-0 top-0 bottom-0 w-4 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzAwMCIvPjxyZWN0IHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMwMDAiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] opacity-20 border-l border-slate-300 dark:border-slate-700" />
       </div>
 
       <style>{`
         @keyframes moveBg {
           from { background-position: 0 0; }
-          to { background-position: -80px 0; }
+          to { background-position: -40px 0; }
         }
       `}</style>
 
@@ -236,36 +293,37 @@ export default function NeonSprint({ settings, onComplete }: NeonSprintProps) {
           value={userInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="absolute opacity-0 w-[1px] h-[1px] -z-10"
+          className="fixed opacity-0 pointer-events-none -z-10 w-[1px] h-[1px]"
           style={{ top: '50%', left: '50%' }}
           autoComplete="off"
           disabled={status === 'finished'}
         />
+        
         {renderText()}
         
         {/* Idle Warning */}
         {isIdle && status === 'running' && (
-           <div className="absolute top-[10%] left-1/2 -translate-x-1/2 bg-red-500/90 text-white px-4 sm:px-6 py-1 sm:py-2 rounded-full font-bold shadow-lg animate-bounce text-sm sm:text-base whitespace-nowrap">
+           <div className="absolute top-[10%] left-1/2 -translate-x-1/2 bg-red-100 text-red-600 border border-red-200 px-6 py-2 rounded-full font-bold shadow-sm animate-bounce text-sm">
               Keep Typing!
            </div>
         )}
 
         {status === 'finished' && (
-          <div className="absolute inset-0 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center animate-in fade-in z-20">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">Race Finished!</h2>
-            <div className="flex gap-4 sm:gap-8 mb-6">
+          <div className="absolute inset-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center animate-in fade-in z-20 border border-slate-200 dark:border-slate-800">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Race Finished!</h2>
+            <div className="flex gap-8 mb-8">
                <div className="text-center">
-                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm uppercase tracking-wider">Speed</p>
-                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-xl sm:text-2xl">{wpm} WPM</p>
+                  <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold mb-1">Speed</p>
+                  <p className="text-blue-500 font-bold text-3xl">{wpm} WPM</p>
                </div>
                <div className="text-center">
-                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm uppercase tracking-wider">Accuracy</p>
-                  <p className="text-amber-600 dark:text-amber-400 font-bold text-xl sm:text-2xl">{accuracy}%</p>
+                  <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold mb-1">Accuracy</p>
+                  <p className="text-slate-800 dark:text-slate-200 font-bold text-3xl">{accuracy}%</p>
                </div>
             </div>
             <button
               onClick={resetGame}
-              className="px-6 py-2 sm:px-8 sm:py-3 bg-emerald-500 text-slate-900 rounded-full font-bold hover:scale-105 transition-all shadow-[0_0_15px_rgba(16, 185, 129,0.4)]"
+              className="px-8 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors"
             >
               Race Again
             </button>
@@ -274,10 +332,22 @@ export default function NeonSprint({ settings, onComplete }: NeonSprintProps) {
       </div>
       
       {status === 'idle' && (
-        <div className="mt-4 sm:mt-8 text-slate-500 dark:text-slate-400 animate-pulse text-sm sm:text-base">
-          Start typing to begin the race!
+        <div className="mt-8 text-slate-400 dark:text-slate-500 font-medium animate-pulse text-center">
+          Start typing to begin the race
         </div>
       )}
+
+      {/* Restart Control */}
+      <div className="mt-8 flex justify-center w-full opacity-60 hover:opacity-100 transition-opacity">
+        <button 
+          onClick={resetGame}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-200/50 hover:bg-slate-200 dark:bg-slate-800/50 dark:hover:bg-slate-700 transition-all font-medium text-sm border border-slate-300/50 dark:border-slate-700/50"
+          title="Restart Race (Esc)"
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span>Restart Race (Esc)</span>
+        </button>
+      </div>
     </div>
   );
 }
