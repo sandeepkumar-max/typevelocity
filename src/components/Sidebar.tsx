@@ -1,5 +1,6 @@
 import React from 'react';
 import { ViewState } from '../types';
+import InstallButton from './InstallButton';
 import { Home, Keyboard, Info, HelpCircle, Mail, X, Play, Trophy, BarChart2 } from 'lucide-react';
 
 interface SidebarProps {
@@ -72,6 +73,7 @@ export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, 
             </button>
           ))}
         </nav>
+        <InstallButton theme={theme} />
       </aside>
     </>
   );
