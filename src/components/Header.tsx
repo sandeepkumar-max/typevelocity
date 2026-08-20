@@ -3,6 +3,7 @@ import { Keyboard, Play, Trophy, Menu, Sun, Moon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { auth } from '../lib/firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import InstallButton from './InstallButton';
 
 interface HeaderProps {
   currentView: ViewState;
@@ -85,6 +86,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
 
           {/* Auth & Theme Buttons */}
           <div className="flex items-center space-x-3">
+            <InstallButton variant="header" theme={theme} />
             <button 
               onClick={onThemeToggle}
               className="p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"

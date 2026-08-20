@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
 
-export default function InstallButton({ theme }: { theme?: 'dark' | 'light' }) {
+export default function InstallButton({ theme, variant = 'sidebar' }: { theme?: 'dark' | 'light', variant?: 'sidebar' | 'header' }) {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
@@ -34,7 +34,19 @@ export default function InstallButton({ theme }: { theme?: 'dark' | 'light' }) {
     }
   };
 
-  
+  if (variant === 'header') {
+    return (
+      <button 
+        onClick={handleInstallClick}
+        disabled={!deferredPrompt}
+        title="Install App"
+        className="hidden md:flex items-center justify-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <Download className="w-4 h-4" />
+        <span>Install</span>
+      </button>
+    );
+  }
 
   return (
     <div className="mt-8 px-3">
