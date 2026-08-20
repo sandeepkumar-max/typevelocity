@@ -32,3 +32,32 @@ body {
 body {
   transition: background-color 0.3s, color 0.3s;
 }
+
+/* Native App Behaviors */
+html, body {
+  /* Prevent pull-to-refresh & overscroll bounce */
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  
+  /* Remove blue tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Prevent text selection like a real app */
+  user-select: none;
+  -webkit-user-select: none;
+  
+  /* Prevent long-press popup on iOS */
+  -webkit-touch-callout: none;
+}
+
+/* Allow text selection only on inputs */
+input, textarea {
+  user-select: auto;
+  -webkit-user-select: auto;
+}
+
+/* Hide default scrollbars for native feel */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
