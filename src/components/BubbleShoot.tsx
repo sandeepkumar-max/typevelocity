@@ -308,8 +308,7 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
         value={userInput}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
-        className="fixed opacity-0 pointer-events-none -z-10 w-[1px] h-[1px]"
-        style={{ top: '50%', left: '50%' }}
+        className="absolute inset-0 w-full h-full opacity-0 bg-transparent text-transparent border-none outline-none cursor-default sm:cursor-text z-0 resize-none"
         autoComplete="off"
         disabled={status === 'finished'}
       />

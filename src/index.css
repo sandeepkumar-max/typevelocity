@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+
 @theme {
   --color-neon-cyan: #00E5FF;
   --color-vibrant-purple: #7C3AED;

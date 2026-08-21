@@ -170,8 +170,9 @@ export default function StatsView({ lastSession, onAction }: StatsViewProps) {
              <div className="text-center py-12 text-slate-500">Loading history...</div>
            ) : history.length > 0 ? (
              <div className="flex flex-col gap-12">
-               <div className="h-[400px] w-full">
-                 <ResponsiveContainer width="100%" height="100%">
+               <div className="w-full overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+                 <div className="h-[300px] sm:h-[400px] min-w-[600px] sm:min-w-0 w-full">
+                   <ResponsiveContainer width="100%" height="100%">
                    <LineChart data={history.map(s => {
                      let dateObj = new Date();
                      if (s.createdAt) {
@@ -184,7 +185,7 @@ export default function StatsView({ lastSession, onAction }: StatsViewProps) {
                      return { ...s, date: format(dateObj, 'MMM dd, HH:mm') };
                    })}>
                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
-                     <XAxis dataKey="date" stroke="currentColor" opacity={0.5} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                     <XAxis dataKey="date" stroke="currentColor" opacity={0.5} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} minTickGap={20} tickMargin={10} />
                      <YAxis stroke="currentColor" opacity={0.5} axisLine={false} tickLine={false} />
                      <Tooltip 
                         contentStyle={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
@@ -194,6 +195,7 @@ export default function StatsView({ lastSession, onAction }: StatsViewProps) {
                      <Line type="monotone" dataKey="accuracy" name="Accuracy %" stroke="#0ea5e9" strokeWidth={4} dot={{ r: 4, fill: '#0ea5e9' }} />
                    </LineChart>
                  </ResponsiveContainer>
+                 </div>
                </div>
                
                <div>

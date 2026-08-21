@@ -197,7 +197,7 @@ export default function NeonSprint({ settings, onSettingsChange, onComplete }: N
             }}
           >
             {targetText.split('').map((char, index) => {
-            let colorClass = 'text-slate-400 dark:text-slate-600';
+            let colorClass = 'text-slate-500 dark:text-slate-400';
             let borderClass = '';
             let isCursor = false;
             
@@ -293,8 +293,7 @@ export default function NeonSprint({ settings, onSettingsChange, onComplete }: N
           value={userInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="fixed opacity-0 pointer-events-none -z-10 w-[1px] h-[1px]"
-          style={{ top: '50%', left: '50%' }}
+          className="absolute inset-0 w-full h-full opacity-0 bg-transparent text-transparent border-none outline-none cursor-default sm:cursor-text z-0 resize-none"
           autoComplete="off"
           disabled={status === 'finished'}
         />

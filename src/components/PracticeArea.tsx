@@ -237,7 +237,7 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
           }}
         >
           {targetText.split('').map((char, index) => {
-          let colorClass = 'text-slate-500'; // un-typed
+          let colorClass = 'text-slate-500 dark:text-slate-400'; // un-typed
           let borderClass = '';
           let isCursor = false;
           
@@ -297,8 +297,7 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
           value={userInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="fixed opacity-0 pointer-events-none -z-10 w-[1px] h-[1px]"
-          style={{ top: '50%', left: '50%' }}
+          className="absolute inset-0 w-full h-full opacity-0 bg-transparent text-transparent border-none outline-none cursor-default sm:cursor-text z-0 resize-none"
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
