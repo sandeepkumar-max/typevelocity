@@ -3,7 +3,7 @@ import { Keyboard, Play, Trophy, Menu, Sun, Moon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { auth } from '../lib/firebase';
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import InstallButton from './InstallButton';
 
 interface HeaderProps {
@@ -27,7 +27,12 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, provider);
+      } else {
+        await signInWithPopup(auth, provider);
+      }
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
         return; // Ignore if user closes the popup
