@@ -1,6 +1,7 @@
 import { ViewState } from '../types';
 import { Keyboard, Play, Trophy, Menu, Sun, Moon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { auth } from '../lib/firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import InstallButton from './InstallButton';
@@ -32,6 +33,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
         return; // Ignore if user closes the popup
       }
       console.error('Error signing in', error);
+      toast.error('Failed to sign in. Please try again later.');
     }
   };
 
@@ -40,6 +42,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
       await signOut(auth);
     } catch (error) {
       console.error('Error signing out', error);
+      toast.error('Failed to sign out. Please check your connection.');
     }
   };
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { SessionStats } from '../types';
 import { auth, db } from '../lib/firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -57,6 +58,7 @@ export default function StatsView({ lastSession, onAction }: StatsViewProps) {
           }
         } catch (error) {
           console.error('Error fetching history:', error);
+          toast.error('Could not load your history. Please check your connection.');
         }
         setLoading(false);
       };

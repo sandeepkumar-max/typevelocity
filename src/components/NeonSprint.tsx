@@ -293,7 +293,7 @@ export default function NeonSprint({ settings, onSettingsChange, onComplete }: N
           value={userInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="absolute inset-0 w-full h-full opacity-0 bg-transparent text-transparent border-none outline-none cursor-default sm:cursor-text z-0 resize-none"
+          className="absolute inset-0 w-full h-full opacity-0 bg-transparent text-transparent border-none outline-none cursor-default sm:cursor-text z-10 resize-none"
           autoComplete="off"
           disabled={status === 'finished'}
         />

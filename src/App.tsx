@@ -11,6 +11,7 @@ import StatsView from './components/StatsView';
 import { auth, db } from './lib/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Keyboard } from 'lucide-react';
+import { Toaster, toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
 export default function App() {
@@ -53,6 +54,7 @@ export default function App() {
         });
       } catch (error) {
         console.error('Error saving session:', error);
+        toast.error('Failed to save progress. Please check your connection.');
       }
     }
   };
@@ -168,6 +170,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen relative overflow-hidden flex ${themeClasses} ${theme === 'light' ? 'light-theme' : 'dark'}`}>
+      <Toaster position="bottom-right" toastOptions={{ style: { background: theme === 'dark' ? '#1e293b' : '#fff', color: theme === 'dark' ? '#fff' : '#0f172a' } }} />
       {/* Abstract Background Gradients */}
       <motion.div 
         animate={{ 

@@ -34,13 +34,15 @@ export default function InstallButton({ theme, variant = 'sidebar' }: { theme?: 
     }
   };
 
+  if (!deferredPrompt) return null;
+
   if (variant === 'header') {
     return (
       <button 
         onClick={handleInstallClick}
-        disabled={!deferredPrompt}
+        
         title="Install App"
-        className="hidden md:flex items-center justify-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="hidden md:flex items-center justify-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors "
       >
         <Download className="w-4 h-4" />
         <span>Install</span>
@@ -52,8 +54,8 @@ export default function InstallButton({ theme, variant = 'sidebar' }: { theme?: 
     <div className="mt-8 px-3">
       <button 
         onClick={handleInstallClick}
-        disabled={!deferredPrompt}
-        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed
+        
+        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-md 
           ${theme === 'light' 
             ? 'bg-blue-600 text-white hover:bg-blue-700' 
             : 'bg-blue-500 text-slate-900 hover:bg-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
