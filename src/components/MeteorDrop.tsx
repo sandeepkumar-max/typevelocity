@@ -161,7 +161,61 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
   }, [lives, status, endGame, settings.soundEnabled]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Handled by keydown
+    if (status !== 'playing') {
+      // Auto start on first typing
+      if (status === 'idle' && e.target.value.length > 0) {
+         setStatus('playing');
+         setStartTime(Date.now());
+      } else {
+         return;
+      }
+    }
+    
+    let newVal = e.target.value;
+    
+    // Auto-submit on space
+    if (newVal.endsWith(' ')) {
+      const trimmed = newVal.trim();
+      const matchedIndex = meteors.findIndex(m => m.word === trimmed);
+      if (matchedIndex !== -1) {
+        setMeteors(prev => prev.filter((_, idx) => idx !== matchedIndex));
+        setScore(s => s + 10);
+        setInput('');
+        if (settings.soundEnabled) playSuccessSound();
+      } else {
+        setInput('');
+        setErrorCount(prev => prev + 1);
+        if (settings.soundEnabled) playErrorSound();
+      }
+      return;
+    }
+    
+    if (newVal.length < input.length) {
+      if (settings.backspaceLock) return;
+      setBackspaceCount(prev => prev + 1);
+      setInput(newVal);
+      return;
+    }
+
+    if (newVal.length > input.length) {
+      const addedChars = newVal.slice(input.length);
+      let finalVal = input;
+      
+      for (const char of addedChars) {
+        const mappedKey = mapKeystroke(char, settings.language, settings.hindiFont);
+        finalVal += mappedKey;
+        setTotalTypedChars(prev => prev + 1);
+        
+        const isPrefix = meteors.some(m => m.word.startsWith(finalVal));
+        if (!isPrefix) {
+          setErrorCount(prev => prev + 1);
+          if (settings.soundEnabled) playErrorSound();
+        } else {
+          if (settings.soundEnabled) playKeystrokeSound();
+        }
+      }
+      setInput(finalVal);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -170,60 +224,24 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
       resetGame();
       return;
     }
-
-    if (e.key === 'Backspace') {
-       if (settings.backspaceLock) {
-         e.preventDefault();
-         return;
-       }
-       setBackspaceCount(prev => prev + 1);
-       if (input.length > 0) {
-         e.preventDefault();
-         setInput(prev => prev.slice(0, -1));
-       }
+    if (e.key === 'Backspace' && settings.backspaceLock) {
+       e.preventDefault();
        return;
     }
-    
     if (e.key === 'Enter' && status === 'playing') {
       const matchedIndex = meteors.findIndex(m => m.word === input.trim());
       if (matchedIndex !== -1) {
-        // Destroy meteor
         setMeteors(prev => prev.filter((_, idx) => idx !== matchedIndex));
         setScore(s => s + 10);
         setInput('');
-        if (settings.soundEnabled) playSuccessSound(); // Small success
+        if (settings.soundEnabled) playSuccessSound();
       } else {
-        // Penalty? Clear input at least
         setInput('');
         setErrorCount(prev => prev + 1);
         if (settings.soundEnabled) playErrorSound();
       }
       return;
     }
-
-    if (e.ctrlKey || e.altKey || e.metaKey || e.key.length > 1) {
-       return;
-    }
-
-    e.preventDefault();
-    if (status !== 'playing') return;
-
-    const mappedKey = mapKeystroke(e.key, settings.language, settings.hindiFont);
-    const val = input + mappedKey;
-    
-    if (val.length > input.length) {
-       setTotalTypedChars(prev => prev + 1);
-       // Simple error heuristic for meteor mode: if the typed text isn't a prefix of any meteor
-       const isPrefix = meteors.some(m => m.word.startsWith(val));
-       if (!isPrefix) {
-          setErrorCount(prev => prev + 1);
-          if (settings.soundEnabled) playErrorSound();
-       } else {
-          if (settings.soundEnabled) playKeystrokeSound();
-       }
-    }
-    
-    setInput(val);
   };
 
   return (

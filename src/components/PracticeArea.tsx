@@ -59,86 +59,53 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
        resetTest();
        return;
     }
-
-    if (e.key === 'Backspace') {
-       if (settings.backspaceLock) {
-         e.preventDefault();
-         return;
-       }
-       setBackspaceCount(prev => prev + 1);
-       if (userInput.length > 0) {
-         e.preventDefault();
-         setUserInput(prev => prev.slice(0, -1));
-       }
+    if (e.key === 'Backspace' && settings.backspaceLock) {
+       e.preventDefault();
        return;
-    }
-
-    // Ignore modifiers
-    if (e.ctrlKey || e.altKey || e.metaKey || e.key.length > 1) {
-       return;
-    }
-
-    e.preventDefault(); // Stop native input behavior to avoid auto-correct/IME interference
-    
-    if (status === 'finished') return;
-    
-    const mappedKey = mapKeystroke(e.key, settings.language, settings.hindiFont);
-    const val = userInput + mappedKey;
-    
-    if (val.length > targetText.length) return;
-    if (status === 'idle') {
-      setStatus('running');
-    }
-
-    if (val.length > userInput.length) {
-       totalTypedRef.current += 1;
-       const lastChar = val[val.length - 1];
-       const expectedChar = targetText[val.length - 1];
-       if (lastChar !== expectedChar) {
-          errorCountRef.current += 1;
-          setErrorCount(prev => prev + 1);
-          if (settings.soundEnabled) playErrorSound();
-       } else {
-          if (settings.soundEnabled) playKeystrokeSound();
-       }
-    }
-
-    setUserInput(val);
-    calculateStats(val, timeLeft);
-
-    if (targetText.length - val.length < 100) {
-       setTargetText(prev => prev + ' ' + generateText(settings.difficulty, 50, settings.easyCase, settings.language, settings.hindiFont));
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Handled by keydown now to bypass IME/autocorrect
-  };
-
-  const endTest = (finalInput: string = userInput, finalTimeLeft: number = timeLeft) => {
-    setStatus('finished');
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (settings.soundEnabled) playSuccessSound();
+    if (status === 'finished') return;
     
-    if (onComplete) {
-       const correctChars = finalInput.split('').filter((c, i) => c === targetText[i]).length;
-       const timeSpent = settings.time - finalTimeLeft;
-       const finalWpm = timeSpent > 0 ? Math.round((correctChars / 5) / (timeSpent / 60)) : 0;
-       
-       const total = totalTypedRef.current;
-       const errors = errorCountRef.current;
-       const finalAccuracy = total === 0 ? 100 : Math.max(0, Math.round(((total - errors) / total) * 100));
-       
-       onComplete({
-         mode: 'practice',
-         wpm: Math.max(0, finalWpm),
-         accuracy: finalAccuracy,
-         timeSpent,
-         errorCount,
-         backspaceCount,
-         wordStats: {},
-         letterStats: {}
-       });
+    const newVal = e.target.value;
+    
+    if (newVal.length < userInput.length) {
+      if (settings.backspaceLock) return;
+      setBackspaceCount(prev => prev + 1);
+      setUserInput(newVal);
+      return;
+    }
+
+    if (newVal.length > userInput.length) {
+      if (status === 'idle') setStatus('running');
+      
+      const addedChars = newVal.slice(userInput.length);
+      let finalVal = userInput;
+      
+      for (const char of addedChars) {
+         if (finalVal.length >= targetText.length) break;
+         
+         const mappedKey = mapKeystroke(char, settings.language, settings.hindiFont);
+         finalVal += mappedKey;
+         
+         totalTypedRef.current += 1;
+         const expectedChar = targetText[finalVal.length - 1];
+         if (mappedKey !== expectedChar) {
+            errorCountRef.current += 1;
+            setErrorCount(prev => prev + 1);
+            if (settings.soundEnabled) playErrorSound();
+         } else {
+            if (settings.soundEnabled) playKeystrokeSound();
+         }
+      }
+      
+      setUserInput(finalVal);
+      calculateStats(finalVal, timeLeft);
+      
+      if (targetText.length - finalVal.length < 100) {
+         setTargetText(prev => prev + ' ' + generateText(settings.difficulty, 50, settings.easyCase, settings.language, settings.hindiFont));
+      }
     }
   };
 

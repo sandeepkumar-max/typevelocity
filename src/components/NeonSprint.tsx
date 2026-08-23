@@ -59,74 +59,70 @@ export default function NeonSprint({ settings, onSettingsChange, onComplete }: N
       resetGame();
       return;
     }
-
-    if (e.key === 'Backspace') {
-       if (settings.backspaceLock) {
-         e.preventDefault();
-         return;
-       }
-       if (userInput.length > 0) {
-         e.preventDefault();
-         setUserInput(prev => prev.slice(0, -1));
-       }
+    if (e.key === 'Backspace' && settings.backspaceLock) {
+       e.preventDefault();
        return;
-    }
-
-    if (e.ctrlKey || e.altKey || e.metaKey || e.key.length > 1) {
-       return;
-    }
-
-    e.preventDefault();
-
-    let currentStatus = status;
-    if (currentStatus === 'idle') {
-      setStatus('running');
-      setStartTime(Date.now());
-      setLastTypeTime(Date.now());
-      currentStatus = 'running';
-    }
-    
-    if (currentStatus !== 'running') return;
-    
-    setLastTypeTime(Date.now());
-    setIsIdle(false);
-    
-    const mappedKey = mapKeystroke(e.key, settings.language, settings.hindiFont);
-    const val = userInput + mappedKey;
-    
-    if (settings.soundEnabled) {
-      // play click sound
-    }
-
-    if (val.length > userInput.length) {
-      const newChar = val[val.length - 1];
-      const targetChar = targetText[val.length - 1];
-      if (newChar !== targetChar) {
-        setErrors(prev => prev + 1);
-      }
-    }
-
-    setUserInput(val);
-
-    if (startTime) {
-      const timeSpent = (Date.now() - startTime) / 1000;
-      const minutes = timeSpent / 60;
-      if (minutes > 0) {
-        setWpm(Math.round((val.length / 5) / minutes));
-      }
-      
-      const currentErrors = errors + (val.length > userInput.length && val[val.length - 1] !== targetText[val.length - 1] ? 1 : 0);
-      const acc = Math.round(((val.length - currentErrors) / val.length) * 100);
-      setAccuracy(isNaN(acc) ? 100 : Math.max(0, acc));
-    }
-
-    if (val.length === targetText.length) {
-      finishRace();
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Handled by keydown
+    if (status === 'finished') return;
+    
+    const newVal = e.target.value;
+    
+    if (newVal.length < userInput.length) {
+      if (settings.backspaceLock) return;
+      setUserInput(newVal);
+      return;
+    }
+
+    if (newVal.length > userInput.length) {
+      let currentStatus = status;
+      if (currentStatus === 'idle') {
+        setStatus('running');
+        setStartTime(Date.now());
+        setLastTypeTime(Date.now());
+        currentStatus = 'running';
+      }
+      
+      if (currentStatus !== 'running') return;
+      
+      setLastTypeTime(Date.now());
+      setIsIdle(false);
+      
+      const addedChars = newVal.slice(userInput.length);
+      let finalVal = userInput;
+      let newErrors = 0;
+      
+      for (const char of addedChars) {
+         if (finalVal.length >= targetText.length) break;
+         const mappedKey = mapKeystroke(char, settings.language, settings.hindiFont);
+         finalVal += mappedKey;
+         
+         const expectedChar = targetText[finalVal.length - 1];
+         if (mappedKey !== expectedChar) {
+            newErrors++;
+         }
+      }
+      
+      if (newErrors > 0) {
+        setErrors(prev => prev + newErrors);
+      }
+      
+      setUserInput(finalVal);
+      
+      if (startTime) {
+        const timeSpent = (Date.now() - startTime) / 1000;
+        const minutes = timeSpent / 60;
+        if (minutes > 0) {
+          setWpm(Math.round((finalVal.length / 5) / minutes));
+        }
+      }
+
+      if (finalVal.length >= targetText.length) {
+        endGame(finalVal, (Date.now() - startTime!) / 1000);
+      }
+    }
   };
 
   const finishRace = () => {

@@ -153,73 +153,77 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
   }, [status]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-       if (settings.backspaceLock) {
-         e.preventDefault();
-         return;
-       }
-       if (userInput.length > 0) {
-         e.preventDefault();
-         setUserInput(prev => prev.slice(0, -1));
-       }
-       return;
-    }
-    
     if (e.key === 'Escape') {
       e.preventDefault();
       resetGame();
       return;
     }
-
-    if (e.ctrlKey || e.altKey || e.metaKey || e.key.length > 1) {
+    if (e.key === 'Backspace' && settings.backspaceLock) {
+       e.preventDefault();
        return;
-    }
-
-    e.preventDefault();
-
-    let isStarting = false;
-    if (status === 'idle') {
-      setStatus('playing');
-      setStartTime(Date.now());
-      isStarting = true;
-    }
-    
-    if (status !== 'playing' && !isStarting) return;
-    if (isStarting) return;
-
-    const mappedKey = mapKeystroke(e.key, settings.language, settings.hindiFont);
-    const val = userInput + mappedKey;
-
-    setTotalTypedChars(prev => prev + 1);
-
-    if (settings.soundEnabled) {
-      // play click sound
-    }
-
-    const isPrefix = bubbles.some(b => b.word.startsWith(val));
-    
-    if (!isPrefix && val.length > 0) {
-      setErrors(e => e + 1);
-      setUserInput(''); // Reset on mistake
-      return;
-    }
-
-    const matchedIndex = bubbles.findIndex(b => b.word === val.trim());
-    if (matchedIndex !== -1) {
-      setBubbles(prev => prev.filter((_, i) => i !== matchedIndex));
-      setScore(s => s + 1);
-      setUserInput('');
-      
-      if (settings.soundEnabled) {
-        // play pop sound
-      }
-    } else {
-      setUserInput(val);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Handled by keydown
+    if (status === 'finished' || status === 'gameover') return;
+    
+    const newVal = e.target.value;
+    
+    if (newVal.length < userInput.length) {
+      if (settings.backspaceLock) return;
+      setUserInput(newVal);
+      return;
+    }
+
+    if (newVal.length > userInput.length) {
+      let isStarting = false;
+      if (status === 'idle') {
+        setStatus('playing');
+        setStartTime(Date.now());
+        isStarting = true;
+      }
+      
+      if (status !== 'playing' && !isStarting) return;
+      
+      const addedChars = newVal.slice(userInput.length);
+      let finalVal = userInput;
+      let mistakes = 0;
+      let matchedId = -1;
+      
+      for (const char of addedChars) {
+        const mappedKey = mapKeystroke(char, settings.language, settings.hindiFont);
+        const tempVal = finalVal + mappedKey;
+        setTotalTypedChars(prev => prev + 1);
+        
+        const isPrefix = bubbles.some(b => b.word.startsWith(tempVal));
+        if (!isPrefix && tempVal.length > 0) {
+          mistakes++;
+          finalVal = '';
+          break;
+        }
+        
+        finalVal = tempVal;
+        const matchedIndex = bubbles.findIndex(b => b.word === finalVal.trim());
+        if (matchedIndex !== -1) {
+          matchedId = matchedIndex;
+          break;
+        }
+      }
+      
+      if (mistakes > 0) {
+        setErrors(e => e + mistakes);
+        setUserInput('');
+        return;
+      }
+      
+      if (matchedId !== -1) {
+        setBubbles(prev => prev.filter((_, i) => i !== matchedId));
+        setScore(s => s + 1);
+        setUserInput('');
+      } else {
+        setUserInput(finalVal);
+      }
+    }
   };
 
   const resetGame = () => {
