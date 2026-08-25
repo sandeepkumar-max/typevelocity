@@ -144,6 +144,41 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
     };
   }, [status]); 
 
+  const endTest = useCallback((input: string, currentLeft: number) => {
+    setStatus('finished');
+    if (timerRef.current) clearInterval(timerRef.current);
+    
+    let correctChars = 0;
+    for (let i = 0; i < input.length; i++) {
+      if (input[i] === targetText[i]) correctChars++;
+    }
+
+    const total = totalTypedRef.current;
+    const errors = errorCountRef.current;
+    const accuracyVal = total === 0 ? 100 : Math.max(0, Math.round(((total - errors) / total) * 100));
+    setAccuracy(accuracyVal);
+
+    const timeElapsedMinutes = (settings.time - currentLeft) / 60;
+    const wpmVal = timeElapsedMinutes > 0 ? Math.round((correctChars / 5) / timeElapsedMinutes) : 0;
+    const finalWpm = Math.max(0, wpmVal);
+    setWpm(finalWpm);
+    
+    if (settings.soundEnabled) playSuccessSound();
+
+    if (onComplete) {
+      onComplete({
+        wpm: finalWpm,
+        accuracy: accuracyVal,
+        errorCount: errors,
+        backspaceCount: backspaceCount,
+        timeSpent: settings.time - currentLeft,
+        mode: 'practice',
+        wordStats: {},
+        letterStats: {}
+      });
+    }
+  }, [onComplete, settings.soundEnabled, settings.time, targetText, backspaceCount]);
+
   // Handle time expiration
   useEffect(() => {
     if (status === 'running') {
@@ -197,7 +232,7 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
         onClick={() => inputRef.current?.focus()}
       >
         <div 
-          className={`${settings.language === 'hindi' ? '' : (settings.fontFamily || 'font-fira')} text-lg sm:text-2xl leading-relaxed tracking-wide whitespace-pre-wrap transition-transform duration-200 ease-out`}
+          className={`${settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? 'font-krutidev' : '') : (settings.fontFamily || 'font-fira')} text-lg sm:text-2xl leading-relaxed tracking-wide whitespace-pre-wrap transition-transform duration-200 ease-out`}
           style={{ 
             transform: `translateY(${offsetY}px)`,
             fontFamily: settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? "'Kruti Dev 010', 'Kruti Dev', sans-serif" : "'Mangal', sans-serif") : undefined
@@ -258,6 +293,7 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
 
       {/* Typing Area */}
       <div className={`w-full glass-panel p-4 sm:p-8 rounded-2xl relative h-64 sm:h-80 ${settings.autoScroll ? 'overflow-hidden' : 'overflow-y-auto'} cursor-text`} onClick={() => inputRef.current?.focus()}>
+        
         <input
           ref={inputRef}
           type="text"

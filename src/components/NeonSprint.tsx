@@ -120,7 +120,7 @@ export default function NeonSprint({ settings, onSettingsChange, onComplete }: N
       }
 
       if (finalVal.length >= targetText.length) {
-        endGame(finalVal, (Date.now() - startTime!) / 1000);
+        finishRace();
       }
     }
   };

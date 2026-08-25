@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GameSettings, SessionStats } from '../types';
 import { generateText } from '../utils/words';
 import { mapKeystroke } from '../utils/keyboardMap';
-import { Keyboard } from 'lucide-react';
+import { Keyboard, RotateCcw } from 'lucide-react';
 import SettingsBar from './SettingsBar';
-import { RotateCcw } from 'lucide-react';
 
 interface BubbleShootProps {
   settings: GameSettings;

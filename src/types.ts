@@ -1,5 +1,5 @@
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'developer';
-export type ViewState = 'home' | 'practice' | 'meteor' | 'sprint' | 'bubble' | 'about' | 'help' | 'contact' | 'stats';
+export type ViewState = 'home' | 'practice' | 'meteor' | 'sprint' | 'bubble' | 'about' | 'help' | 'contact' | 'stats' | 'guide' | 'lessons' | 'lesson-practice';
 export type EasyCase = 'lower' | 'upper' | 'mixed';
 export type Language = 'english' | 'hindi';
 export type HindiFont = 'mangal' | 'krutidev';

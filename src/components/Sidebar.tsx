@@ -1,7 +1,7 @@
 import React from 'react';
 import { ViewState } from '../types';
 import InstallButton from './InstallButton';
-import { Home, Keyboard, Info, HelpCircle, Mail, X, Play, Trophy, BarChart2 } from 'lucide-react';
+import { Home, Keyboard, Info, HelpCircle, Mail, X, Play, Trophy, BarChart2, BookOpen } from 'lucide-react';
 
 interface SidebarProps {
   currentView: ViewState;
@@ -14,6 +14,7 @@ interface SidebarProps {
 export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, theme }: SidebarProps) {
   const menuItems = [
     { id: 'home', label: 'Home', icon: Home },
+    { id: 'guide', label: 'Typing Guide', icon: BookOpen },
     { id: 'practice', label: 'Practice', icon: Keyboard },
     { id: 'meteor', label: 'Meteor Drop', icon: Play },
     { id: 'sprint', label: 'Neon Sprint', icon: Trophy },

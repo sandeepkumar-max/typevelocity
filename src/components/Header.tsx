@@ -1,5 +1,5 @@
 import { ViewState } from '../types';
-import { Keyboard, Play, Trophy, Menu, Sun, Moon } from 'lucide-react';
+import { Keyboard, Play, Trophy, Menu, Sun, Moon, BookOpen } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { auth } from '../lib/firebase';
@@ -12,9 +12,11 @@ interface HeaderProps {
   theme: 'dark' | 'light';
   onThemeToggle: () => void;
   onMenuToggle: () => void;
+  settings: GameSettings;
+  onSettingsChange: (settings: GameSettings) => void;
 }
 
-export default function Header({ currentView, onViewChange, theme, onThemeToggle, onMenuToggle }: HeaderProps) {
+export default function Header({ currentView, onViewChange, theme, onThemeToggle, onMenuToggle, settings, onSettingsChange }: HeaderProps) {
   const [user, setUser] = useState<User | null>(null);
   
   useEffect(() => {
@@ -52,6 +54,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
   };
 
   const navItems = [
+    { id: 'guide', label: 'Guide', icon: BookOpen },
     { id: 'practice', label: 'Practice', icon: Keyboard },
     { id: 'meteor', label: 'Meteor Drop', icon: Play },
     { id: 'sprint', label: 'Neon Sprint', icon: Trophy },
@@ -94,6 +97,27 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
 
           {/* Auth & Theme Buttons */}
           <div className="flex items-center space-x-3">
+            <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1 mr-2 border border-slate-200 dark:border-slate-700">
+              <select
+                value={settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? 'hindi-krutidev' : 'hindi-mangal') : 'english'}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'english') {
+                    onSettingsChange({ ...settings, language: 'english' });
+                  } else if (val === 'hindi-mangal') {
+                    onSettingsChange({ ...settings, language: 'hindi', hindiFont: 'mangal' });
+                  } else if (val === 'hindi-krutidev') {
+                    onSettingsChange({ ...settings, language: 'hindi', hindiFont: 'krutidev' });
+                  }
+                }}
+                className="bg-transparent text-sm font-medium text-slate-700 dark:text-slate-300 outline-none cursor-pointer appearance-none px-2"
+              >
+                <option value="english" className="bg-white dark:bg-slate-900">English</option>
+                <option value="hindi-mangal" className="bg-white dark:bg-slate-900">Hindi (Mangal)</option>
+                <option value="hindi-krutidev" className="bg-white dark:bg-slate-900">Hindi (Kruti Dev)</option>
+              </select>
+            </div>
+            
             <InstallButton variant="header" theme={theme} />
             <button 
               onClick={onThemeToggle}

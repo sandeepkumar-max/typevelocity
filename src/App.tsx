@@ -8,6 +8,11 @@ import MeteorDrop from './components/MeteorDrop';
 import BubbleShoot from './components/BubbleShoot';
 import NeonSprint from './components/NeonSprint';
 import StatsView from './components/StatsView';
+import TypingGuide from './components/TypingGuide';
+import LessonList from './components/LessonList';
+import LessonPractice from './components/LessonPractice';
+import HeroAnimation from './components/HeroAnimation';
+import { CustomCursor } from './components/CustomCursor';
 import { auth, db } from './lib/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Keyboard } from 'lucide-react';
@@ -30,6 +35,8 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [lastSession, setLastSession] = useState<SessionStats | null>(null);
+  const [currentLessonId, setCurrentLessonId] = useState<number>(1);
+  const [courseType, setCourseType] = useState<'mangal' | 'krutidev'>('mangal');
 
   const themeClasses = theme === 'dark' 
     ? "bg-[#0F172A] text-slate-200" 
@@ -80,22 +87,18 @@ export default function App() {
                TypeVelocity is a professional typing platform designed to enhance your speed and accuracy. Gamified exercises, competitive sprints, and detailed analytics.
              </p>
              
-             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
+             <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full sm:w-auto pt-4 justify-center xl:justify-start">
                <button onClick={() => setCurrentView('practice')} className="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg hover:bg-blue-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2">
                  Start Typing <Keyboard className="w-5 h-5" />
                </button>
-               <button onClick={() => setCurrentView('about')} className="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-full font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center">
-                 Learn More
+               <button onClick={() => setCurrentView('lessons')} className="px-8 py-4 bg-emerald-600 text-white rounded-full font-bold text-lg hover:bg-emerald-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2">
+                 Learn Hindi Levels
                </button>
              </div>
            </div>
            
-           <div className="flex-1 w-full max-w-2xl xl:max-w-none relative group perspective-1000">
-             <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 to-sky-400 rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-700"></div>
-             <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 relative transform xl:-rotate-y-6 group-hover:rotate-y-0 transition-transform duration-700">
-               <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent z-10 pointer-events-none mix-blend-overlay"></div>
-               <img src="https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1200&q=80" alt="Mechanical Keyboard" className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-1000" />
-             </div>
+           <div className="flex-1 w-full max-w-2xl xl:max-w-none relative">
+             <HeroAnimation />
            </div>
         </div>
       );
@@ -158,6 +161,22 @@ export default function App() {
       case 'meteor': return <MeteorDrop settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
       case 'sprint': return <NeonSprint settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
       case 'bubble': return <BubbleShoot settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
+      case 'guide': return <TypingGuide />;
+      case 'lessons': return <LessonList 
+        courseType={courseType}
+        onCourseTypeChange={setCourseType}
+        onSelectLesson={(id) => {
+          setCurrentLessonId(id);
+          setCurrentView('lesson-practice');
+        }} 
+      />;
+      case 'lesson-practice': return <LessonPractice 
+        lessonId={currentLessonId} 
+        courseType={courseType}
+        onBack={() => setCurrentView('lessons')} 
+        onNextLesson={(id) => setCurrentLessonId(id)}
+        soundEnabled={settings.soundEnabled}
+      />;
       case 'stats': return <StatsView lastSession={lastSession} onAction={(action) => {
         if (action === 'home') setCurrentView('home');
         if (action === 'restart') {
@@ -170,6 +189,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen relative overflow-hidden flex ${themeClasses} ${theme === 'light' ? 'light-theme' : 'dark'}`}>
+      <CustomCursor />
       <Toaster position="bottom-right" toastOptions={{ style: { background: theme === 'dark' ? '#1e293b' : '#fff', color: theme === 'dark' ? '#fff' : '#0f172a' } }} />
       {/* Abstract Background Gradients */}
       <motion.div 
@@ -206,6 +226,8 @@ export default function App() {
           theme={theme} 
           onThemeToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
           onMenuToggle={() => setIsSidebarOpen(true)}
+          settings={settings}
+          onSettingsChange={setSettings}
         />
         
         <main className="flex-grow flex flex-col py-8 px-4 sm:px-6 lg:px-8 w-full">

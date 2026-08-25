@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Kruti Dev 010";
+  src: url("/krutidev.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 
@@ -16,6 +23,10 @@ body {
 
 .font-fira {
   font-family: var(--font-fira);
+}
+
+.font-krutidev {
+  font-family: "Kruti Dev 010", sans-serif;
 }
 
 .glass-panel {
@@ -64,3 +75,16 @@ input, textarea {
   width: 0px;
   background: transparent;
 }
+
+@media (pointer: fine) {
+  html, 
+  body, 
+  body *:not(iframe),
+  button, 
+  a, 
+  input, 
+  textarea {
+    cursor: none !important;
+  }
+}
+
