@@ -1,10 +1,11 @@
-import { ViewState } from '../types';
-import { Keyboard, Play, Trophy, Menu, Sun, Moon, BookOpen } from 'lucide-react';
+import { ViewState, GameSettings } from '../types';
+import { Keyboard, Play, Trophy, Menu, Sun, Moon, BookOpen, UserCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { auth } from '../lib/firebase';
 import { signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import InstallButton from './InstallButton';
+import UserProfileModal from './UserProfileModal';
 
 interface HeaderProps {
   currentView: ViewState;
@@ -18,6 +19,7 @@ interface HeaderProps {
 
 export default function Header({ currentView, onViewChange, theme, onThemeToggle, onMenuToggle, settings, onSettingsChange }: HeaderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -128,9 +130,22 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
 
             {user ? (
               <div className="flex items-center gap-3">
-                {user.photoURL && (
-                   <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full border border-blue-500" />
-                )}
+                <button
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/10 p-1 pr-2 rounded-full transition-colors"
+                  title="Edit Profile"
+                >
+                  {user.photoURL ? (
+                     <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full border border-blue-500 object-cover" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full border border-blue-500 bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                      <UserCircle className="w-5 h-5 text-slate-500 dark:text-slate-300" />
+                    </div>
+                  )}
+                  <span className="text-sm font-medium hidden sm:block max-w-[100px] truncate text-slate-700 dark:text-slate-200">
+                    {user.displayName || 'User'}
+                  </span>
+                </button>
                 <button 
                   onClick={handleLogout}
                   className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium bg-red-500 hover:bg-red-600 text-white transition-colors"
@@ -157,6 +172,10 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
           </div>
         </div>
       </div>
+      
+      {isProfileModalOpen && user && (
+        <UserProfileModal user={user} onClose={() => setIsProfileModalOpen(false)} />
+      )}
     </header>
   );
 }

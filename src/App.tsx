@@ -12,7 +12,7 @@ import TypingGuide from './components/TypingGuide';
 import LessonList from './components/LessonList';
 import LessonPractice from './components/LessonPractice';
 import HeroAnimation from './components/HeroAnimation';
-import { CustomCursor } from './components/CustomCursor';
+
 import { auth, db } from './lib/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Keyboard } from 'lucide-react';
@@ -189,7 +189,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen relative overflow-hidden flex ${themeClasses} ${theme === 'light' ? 'light-theme' : 'dark'}`}>
-      <CustomCursor />
+
       <Toaster position="bottom-right" toastOptions={{ style: { background: theme === 'dark' ? '#1e293b' : '#fff', color: theme === 'dark' ? '#fff' : '#0f172a' } }} />
       {/* Abstract Background Gradients */}
       <motion.div 

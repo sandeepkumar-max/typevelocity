@@ -18,13 +18,13 @@ export default function HeroAnimation() {
       const numKeys = Math.random() > 0.5 ? 1 : 2;
       const newActive: string[] = [];
       const newParticles: {id: number, char: string, x: number}[] = [];
-      
+            
       for (let i = 0; i < numKeys; i++) {
         const rowIdx = Math.floor(Math.random() * keyboardRows.length);
         const colIdx = Math.floor(Math.random() * keyboardRows[rowIdx].length);
         const char = keyboardRows[rowIdx][colIdx];
         newActive.push(char);
-        
+                
         // Add particle
         particleCounter += 1;
         newParticles.push({
@@ -33,10 +33,10 @@ export default function HeroAnimation() {
           x: (colIdx / keyboardRows[rowIdx].length) * 100 // approximate x position
         });
       }
-      
+            
       setActiveKeys(newActive);
       setParticles(prev => [...prev.slice(-15), ...newParticles]); // keep last 15 particles
-      
+            
       setTimeout(() => {
         setActiveKeys([]);
       }, 150);
@@ -48,7 +48,7 @@ export default function HeroAnimation() {
 
   return (
     <div className="relative w-full h-[400px] flex items-center justify-center perspective-1000">
-      
+            
       {/* Floating Particles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
         <AnimatePresence>
@@ -77,7 +77,7 @@ export default function HeroAnimation() {
         style={{ transformStyle: 'preserve-3d' }}
       >
         <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-500/10 to-sky-500/10 pointer-events-none" />
-        
+                
         {/* Keyboard Keys */}
         <div className="flex flex-col gap-3">
           {keyboardRows.map((row, rIdx) => (

@@ -76,15 +76,5 @@ input, textarea {
   background: transparent;
 }
 
-@media (pointer: fine) {
-  html, 
-  body, 
-  body *:not(iframe),
-  button, 
-  a, 
-  input, 
-  textarea {
-    cursor: none !important;
-  }
-}
+
 
