@@ -39,10 +39,16 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
       }
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
-        return; // Ignore if user closes the popup
+        toast.error('Login popup was closed. If you are on mobile, try again.');
+        return;
+      }
+      if (error.code === 'auth/unauthorized-domain') {
+        toast.error('This domain is not authorized for OAuth. Please add it in Firebase Console.');
+        console.error('Add this domain to Firebase Auth -> Settings -> Authorized Domains:', window.location.hostname);
+        return;
       }
       console.error('Error signing in', error);
-      toast.error('Failed to sign in. Please try again later.');
+      toast.error(`Failed to sign in: ${error.message}`);
     }
   };
 
