@@ -1,16 +1,9 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0F172A">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+const fs = require('fs');
+const html = fs.readFileSync('index.html', 'utf8');
+
+const headEndIndex = html.indexOf('</head>');
+
+const seoTags = `
     <!-- Primary Meta Tags -->
     <title>TypeVelocity - Best Online Typing Tutor & Speed Test</title>
     <meta name="title" content="TypeVelocity - Best Online Typing Tutor & Speed Test" />
@@ -52,10 +45,8 @@
       }
     }
     </script>
-  </head>
-  <body class="bg-[#0F172A] text-slate-200 font-['Poppins',sans-serif] antialiased overflow-x-hidden min-h-screen">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+`;
 
+const updatedHtml = html.replace(/<title>.*?<\/title>/, '').replace('</head>', seoTags + '  </head>');
+
+fs.writeFileSync('index.html', updatedHtml);

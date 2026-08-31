@@ -24,6 +24,9 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
   const [meteors, setMeteors] = useState<Meteor[]>([]);
   const [input, setInput] = useState('');
   const [score, setScore] = useState(0);
+  const [clearedItems, setClearedItems] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
   const [lives, setLives] = useState(3);
   const [status, setStatus] = useState<'idle' | 'playing' | 'gameover'>('idle');
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -31,13 +34,18 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
   const [backspaceCount, setBackspaceCount] = useState(0);
   const [totalTypedChars, setTotalTypedChars] = useState(0);
   
+  const inputRef = useRef<HTMLInputElement>(null);
   const requestRef = useRef<number>();
   const lastSpawnRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const startGame = () => {
+    setTimeout(() => inputRef.current?.focus(), 100);
     setStatus('playing');
     setScore(0);
+    setClearedItems(0);
+    setCombo(0);
+    setMaxCombo(0);
     setLives(3);
     setMeteors([]);
     setInput('');
@@ -63,22 +71,22 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
   const getDifficultySettings = () => {
     switch (settings.difficulty) {
       case 'easy':
-        return { baseSpeed: 0.5, speedMultiplier: 0.01, baseSpawn: 3000, spawnMultiplier: 20, minSpawn: 1500 };
+        return { baseSpeed: 0.3, speedMultiplier: 0.002, baseSpawn: 3500, spawnMultiplier: 5, minSpawn: 2000, scoreMult: 1 };
       case 'medium':
-        return { baseSpeed: 1.0, speedMultiplier: 0.02, baseSpawn: 2200, spawnMultiplier: 30, minSpawn: 1000 };
+        return { baseSpeed: 0.6, speedMultiplier: 0.01, baseSpawn: 2500, spawnMultiplier: 15, minSpawn: 1200, scoreMult: 1.5 };
       case 'hard':
-        return { baseSpeed: 1.5, speedMultiplier: 0.04, baseSpawn: 1500, spawnMultiplier: 40, minSpawn: 600 };
+        return { baseSpeed: 1.0, speedMultiplier: 0.025, baseSpawn: 1800, spawnMultiplier: 25, minSpawn: 800, scoreMult: 2 };
       case 'developer':
-        return { baseSpeed: 2.0, speedMultiplier: 0.06, baseSpawn: 1000, spawnMultiplier: 50, minSpawn: 400 };
+        return { baseSpeed: 1.5, speedMultiplier: 0.05, baseSpawn: 1200, spawnMultiplier: 35, minSpawn: 500, scoreMult: 3 };
       default:
-        return { baseSpeed: 1.0, speedMultiplier: 0.02, baseSpawn: 2200, spawnMultiplier: 30, minSpawn: 1000 };
+        return { baseSpeed: 0.6, speedMultiplier: 0.01, baseSpawn: 2500, spawnMultiplier: 15, minSpawn: 1200, scoreMult: 1.5 };
     }
   };
 
   const spawnMeteor = (timestamp: number) => {
     const diffSettings = getDifficultySettings();
     // Spawn rate based on score (gets faster)
-    const spawnInterval = Math.max(diffSettings.minSpawn, diffSettings.baseSpawn - score * diffSettings.spawnMultiplier);
+    const spawnInterval = Math.max(diffSettings.minSpawn, diffSettings.baseSpawn - clearedItems * diffSettings.spawnMultiplier);
     
     if (timestamp - lastSpawnRef.current > spawnInterval) {
       const containerWidth = containerRef.current?.clientWidth || 800;
@@ -89,7 +97,7 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
         word,
         x: Math.random() * (containerWidth - 100) + 20, // keep away from edges
         y: -50,
-        speed: diffSettings.baseSpeed + (score * diffSettings.speedMultiplier) // speed increases with score
+        speed: diffSettings.baseSpeed + (clearedItems * diffSettings.speedMultiplier) // speed increases with score
       };
       
       setMeteors(prev => [...prev, newMeteor]);
@@ -131,6 +139,7 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
       const hitBottom = updated.filter(m => m.y > containerHeight);
       if (hitBottom.length > 0) {
         setLives(l => Math.max(0, l - hitBottom.length));
+        setCombo(0);
       }
       
       return updated.filter(m => m.y <= containerHeight);
@@ -178,13 +187,24 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
       const trimmed = newVal.trim();
       const matchedIndex = meteors.findIndex(m => m.word === trimmed);
       if (matchedIndex !== -1) {
+        const matchedWord = meteors[matchedIndex].word;
+        const diffSettings = getDifficultySettings();
+        const pts = Math.round((matchedWord.length * 10) * diffSettings.scoreMult * (1 + combo * 0.1));
+        
         setMeteors(prev => prev.filter((_, idx) => idx !== matchedIndex));
-        setScore(s => s + 10);
+        setScore(s => s + pts);
+        setClearedItems(c => c + 1);
+        setCombo(c => {
+          const next = c + 1;
+          setMaxCombo(m => Math.max(m, next));
+          return next;
+        });
         setInput('');
         if (settings.soundEnabled) playSuccessSound();
       } else {
         setInput('');
         setErrorCount(prev => prev + 1);
+        setCombo(0);
         if (settings.soundEnabled) playErrorSound();
       }
       return;
@@ -250,7 +270,10 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
       <div className="flex justify-between w-full max-w-4xl mb-4 glass-panel px-6 py-4 rounded-xl">
          <div className="flex flex-col">
           <span className="text-slate-400 text-sm uppercase tracking-wider">Score</span>
-          <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">{score}</span>
+          <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            {score}
+            {combo > 1 && <span className="ml-3 text-orange-400 text-lg font-bold animate-pulse">Combo x{combo}!</span>}
+          </span>
         </div>
         <div className="flex flex-col items-end">
           <span className="text-slate-400 text-sm uppercase tracking-wider">Lives</span>
@@ -262,80 +285,88 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
         </div>
       </div>
 
-      <div 
+            <div 
         ref={containerRef}
-        className="flex-grow w-full max-w-4xl glass-panel rounded-2xl relative overflow-hidden flex flex-col justify-end"
+        className="flex-grow w-full max-w-4xl rounded-2xl relative overflow-hidden flex flex-col justify-end shadow-2xl border border-slate-700/50 bg-gradient-to-b from-slate-900 via-indigo-950 to-[#050505]"
       >
+        {/* Ninja Background Environment */}
+        {/* Moon */}
+        <div className="absolute top-8 right-12 w-24 h-24 rounded-full bg-slate-100 shadow-[0_0_60px_rgba(241,245,249,0.8)] opacity-90 z-0"></div>
+        {/* Dark mountains / hills */}
+        <svg preserveAspectRatio="none" viewBox="0 0 100 100" className="absolute bottom-0 w-full h-48 opacity-40 pointer-events-none z-0">
+          <path d="M0,100 L0,50 Q20,30 40,60 T80,40 T100,60 L100,100 Z" fill="#0f172a" />
+          <path d="M0,100 L0,70 Q25,40 50,70 T100,50 L100,100 Z" fill="#020617" />
+        </svg>
+
         {status === 'idle' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0F172A]/50 z-10">
-            <h2 className="text-4xl font-bold text-white mb-4">Meteor Drop</h2>
-            <p className="text-slate-300 mb-8 max-w-md text-center">Type the falling words and press Enter to destroy them before they hit the ground!</p>
-            <button onClick={startGame} className="px-8 py-3 bg-blue-500 text-slate-900 rounded-full font-bold hover:scale-105 transition-all shadow-[0_0_15px_rgba(59, 130, 246,0.4)]">
-              Start Game
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20 backdrop-blur-sm">
+            <h2 className="text-5xl font-bold text-white mb-4 drop-shadow-[0_0_15px_rgba(220,38,38,0.8)]">Drop Ninja</h2>
+            <p className="text-slate-300 mb-8 max-w-md text-center">Type the falling shuriken words and press Enter to deflect them before they hit the ground!</p>
+            <button onClick={startGame} className="px-8 py-3 bg-red-600 text-white rounded-full font-bold hover:scale-105 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+              Start Defense
             </button>
           </div>
         )}
 
         {status === 'gameover' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0F172A]/80 z-10">
-            <h2 className="text-4xl font-bold text-red-500 mb-2">Game Over</h2>
-            <p className="text-slate-300 mb-6">Final Score: <span className="text-blue-600 dark:text-blue-400 font-bold">{score}</span></p>
-            <button onClick={startGame} className="px-8 py-3 bg-blue-500 text-slate-900 rounded-full font-bold hover:scale-105 transition-all shadow-[0_0_15px_rgba(59, 130, 246,0.4)]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 backdrop-blur-md">
+            <h2 className="text-4xl font-bold text-red-500 mb-2">Dojo Defeated</h2>
+            <p className="text-slate-300 mb-6">Final Score: <span className="text-red-500 font-bold">{score}</span></p>
+            <button onClick={startGame} className="px-8 py-3 bg-red-600 text-white rounded-full font-bold hover:scale-105 transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)]">
               Play Again
             </button>
           </div>
         )}
 
-        {/* Meteors */}
-        {meteors.map(m => (
+        {/* Shurikens / Meteors */}
+        {meteors.map(m => {
+          const isTargeted = m.word.startsWith(input) && input.length > 0;
+          return (
           <div 
             key={m.id}
-            className={`absolute ${settings.language === 'hindi' ? '' : (settings.fontFamily || 'font-fira')} text-xl font-bold text-white px-3 py-1 rounded-md border border-white/20 bg-black/40 backdrop-blur-sm`}
+            className="absolute flex flex-col items-center z-10"
             style={{ 
               left: m.x, 
-              top: m.y,
-              boxShadow: '0 0 10px rgba(14, 165, 233,0.5)',
-              textShadow: '0 0 5px rgba(255,255,255,0.5)',
-              fontFamily: settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? "'Kruti Dev 010', 'Kruti Dev', sans-serif" : "'Mangal', sans-serif") : undefined
+              top: m.y
             }}
           >
-            {m.word.startsWith(input) && input.length > 0 ? (
-              <>
-                <span className="text-[#10B981]">{input}</span>
-                <span>{m.word.substring(input.length)}</span>
-              </>
-            ) : (
-              m.word
-            )}
+            {/* Shuriken SVG */}
+            <svg viewBox="0 0 100 100" className={`w-12 h-12 mb-2 transition-all ${isTargeted ? 'animate-spin drop-shadow-[0_0_20px_rgba(239,68,68,1)] text-red-500' : 'animate-[spin_3s_linear_infinite] drop-shadow-[0_0_10px_rgba(148,163,184,0.5)] text-slate-300'}`}>
+               <path d="M50 0 L60 40 L100 50 L60 60 L50 100 L40 60 L0 50 L40 40 Z" fill="currentColor" />
+               <circle cx="50" cy="50" r="12" fill="#020617" stroke="currentColor" strokeWidth="4" />
+            </svg>
+            
+            <div className={`px-3 py-1 rounded-md bg-black/80 border ${isTargeted ? 'border-red-500/50' : 'border-white/10'} ${settings.language === 'hindi' ? '' : (settings.fontFamily || 'font-fira')} text-xl font-bold text-white shadow-lg`}
+              style={{
+                fontFamily: settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? "'Kruti Dev 010', 'Kruti Dev', sans-serif" : "'Mangal', sans-serif") : undefined
+              }}
+            >
+              {isTargeted ? (
+                <>
+                  <span className="text-red-400">{input}</span>
+                  <span className="opacity-80">{m.word.substring(input.length)}</span>
+                </>
+              ) : (
+                <span className="opacity-80">{m.word}</span>
+              )}
+            </div>
           </div>
-        ))}
-
-        {/* Input area */}
-        <div className="w-full p-2 sm:p-4 border-t border-black/10 dark:border-white/10 bg-black/5 dark:bg-black/20">
-          <input 
-            autoFocus
-            type="text" 
-            value={input}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            disabled={status !== 'playing'}
-            className={`w-full bg-white dark:bg-transparent border-2 border-slate-300 dark:border-white/20 focus:border-blue-500 rounded-lg px-4 sm:px-6 py-3 sm:py-4 text-xl sm:text-2xl ${settings.language === 'hindi' ? '' : (settings.fontFamily || 'font-fira')} text-slate-800 dark:text-white outline-none transition-colors shadow-sm`}
-            style={{ fontFamily: settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? "'Kruti Dev 010', 'Kruti Dev', sans-serif" : "'Mangal', sans-serif") : undefined }}
-            placeholder="Type word and press Enter..."
-          />
-        </div>
+        )})}
       </div>
 
-      {/* Restart Control */}
-      <div className="mt-8 flex justify-center w-full opacity-60 hover:opacity-100 transition-opacity">
-        <button 
-          onClick={resetGame}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-200/50 hover:bg-slate-200 dark:bg-slate-800/50 dark:hover:bg-slate-700 transition-all font-medium text-sm border border-slate-300/50 dark:border-slate-700/50"
-          title="Restart Game (Esc)"
-        >
-          <RotateCcw className="w-4 h-4" />
-          <span>Restart Game (Esc)</span>
-        </button>
+      {/* Typing Input */}
+      <div className="w-full max-w-4xl mt-4 z-20">
+        <input ref={inputRef} 
+          type="text"
+          value={input}
+          onChange={handleInput}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          className="w-full bg-slate-900/80 backdrop-blur-md border border-slate-700/50 text-white px-6 py-4 rounded-2xl text-xl font-bold focus:outline-none focus:border-red-500 shadow-xl text-center"
+          placeholder="Type to deflect the shurikens..."
+          autoComplete="off"
+          spellCheck="false"
+        />
       </div>
     </div>
   );

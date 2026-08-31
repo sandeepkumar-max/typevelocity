@@ -22,11 +22,11 @@ interface Bubble {
 }
 
 const BUBBLE_COLORS = [
-  'border-blue-400 bg-blue-500/10 text-blue-500',
-  'border-sky-400 bg-sky-500/10 text-sky-500',
-  'border-indigo-400 bg-indigo-500/10 text-indigo-500',
-  'border-purple-400 bg-purple-500/10 text-purple-500',
-  'border-teal-400 bg-teal-500/10 text-teal-500',
+  'border-emerald-400 bg-emerald-500/20 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.4)]',
+  'border-teal-400 bg-teal-500/20 text-teal-400 shadow-[0_0_20px_rgba(45,212,191,0.4)]',
+  'border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)]',
+  'border-fuchsia-400 bg-fuchsia-500/20 text-fuchsia-400 shadow-[0_0_20px_rgba(232,121,249,0.4)]',
+  'border-indigo-400 bg-indigo-500/20 text-indigo-400 shadow-[0_0_20px_rgba(129,140,248,0.4)]',
 ];
 
 export default function BubbleShoot({ settings, onSettingsChange, onComplete }: BubbleShootProps) {
@@ -34,6 +34,9 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [userInput, setUserInput] = useState('');
   const [score, setScore] = useState(0);
+  const [clearedItems, setClearedItems] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
   const [lives, setLives] = useState(5);
   const [startTime, setStartTime] = useState<number | null>(null);
   
@@ -84,7 +87,7 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
 
   const spawnBubble = (timestamp: number) => {
     const diffSettings = getDifficultySettings();
-    const spawnInterval = Math.max(diffSettings.minSpawn, diffSettings.baseSpawn - score * diffSettings.spawnMultiplier);
+    const spawnInterval = Math.max(diffSettings.minSpawn, diffSettings.baseSpawn - clearedItems * diffSettings.spawnMultiplier);
     
     if (timestamp - lastSpawnRef.current > spawnInterval) {
       const containerWidth = containerRef.current?.clientWidth || 800;
@@ -99,7 +102,7 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
         word,
         x: Math.random() * (containerWidth - size),
         y: containerHeight, // Start at the bottom edge so it appears immediately
-        speed: diffSettings.baseSpeed + (score * diffSettings.speedMultiplier),
+        speed: diffSettings.baseSpeed + (clearedItems * diffSettings.speedMultiplier),
         size,
         colorClass
       };
@@ -122,6 +125,7 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
       const floatedAway = updated.filter(b => b.y + b.size < 0);
       if (floatedAway.length > 0) {
         setLives(l => Math.max(0, l - floatedAway.length));
+        setCombo(0);
       }
       
       return updated.filter(b => b.y + b.size >= 0);
@@ -211,13 +215,24 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
       
       if (mistakes > 0) {
         setErrors(e => e + mistakes);
+        setCombo(0);
         setUserInput('');
         return;
       }
       
       if (matchedId !== -1) {
+        const matchedWord = bubbles[matchedId].word;
+        const diffSettings = getDifficultySettings();
+        const pts = Math.round((matchedWord.length * 10) * diffSettings.scoreMult * (1 + combo * 0.1));
+        
         setBubbles(prev => prev.filter((_, i) => i !== matchedId));
-        setScore(s => s + 1);
+        setScore(s => s + pts);
+        setClearedItems(c => c + 1);
+        setCombo(c => {
+          const next = c + 1;
+          setMaxCombo(m => Math.max(m, next));
+          return next;
+        });
         setUserInput('');
       } else {
         setUserInput(finalVal);
@@ -225,11 +240,20 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
     }
   };
 
+  const startGame = () => {
+    resetGame();
+    setStatus('playing');
+    setStartTime(Date.now());
+  };
+
   const resetGame = () => {
     setStatus('idle');
     setBubbles([]);
     setUserInput('');
     setScore(0);
+    setClearedItems(0);
+    setCombo(0);
+    setMaxCombo(0);
     setLives(5);
     setTotalTypedChars(0);
     setErrors(0);
@@ -239,97 +263,100 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-4xl mx-auto relative">
+    <div className="flex flex-col items-center w-full h-full min-h-[600px] max-w-4xl mx-auto relative">
       <SettingsBar settings={settings} onSettingsChange={onSettingsChange} disabled={status === 'playing'} />
       
       <div className="w-full flex justify-between items-center mb-4 px-6">
-        <div className="text-slate-500 font-medium">Score: <span className="text-blue-500 text-2xl font-bold">{score}</span></div>
+        <div className="text-slate-500 font-medium">
+          Score: <span className="text-blue-500 text-2xl font-bold">{score}</span>
+          {combo > 1 && <span className="ml-3 text-orange-400 text-lg font-bold animate-pulse">Combo x{combo}!</span>}
+        </div>
         <div className="text-slate-500 font-medium">Lives: <span className="text-red-500 text-2xl font-bold">{lives}</span></div>
       </div>
 
-      <div 
+            <div 
         ref={containerRef}
-        className="w-full h-[500px] shrink-0 relative overflow-hidden bg-slate-50 dark:bg-[#0F172A]/50 border border-slate-200 dark:border-slate-800 rounded-3xl"
-        onClick={() => inputRef.current?.focus()}
+        className="flex-grow w-full max-w-4xl rounded-2xl relative overflow-hidden shadow-2xl border border-slate-700/50 bg-gradient-to-b from-[#0a192f] via-[#112240] to-[#020c1b]"
       >
+        {/* Mystical Forest Background */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+           {/* Fog/Mist */}
+           <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-emerald-900/40 to-transparent"></div>
+           <div className="absolute top-20 left-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px]"></div>
+           <div className="absolute top-40 right-20 w-48 h-48 bg-fuchsia-500/10 rounded-full blur-[60px]"></div>
+           {/* Trees silhouettes */}
+           <svg className="absolute bottom-0 w-full h-full opacity-20" preserveAspectRatio="xMidYMax slice" viewBox="0 0 100 100">
+              <path d="M10,100 L12,40 L15,100 Z" fill="#020c1b" />
+              <path d="M30,100 L35,20 L38,100 Z" fill="#0f172a" />
+              <path d="M70,100 L73,30 L78,100 Z" fill="#020c1b" />
+              <path d="M90,100 L91,50 L94,100 Z" fill="#0f172a" />
+           </svg>
+        </div>
+
         {status === 'idle' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/50 dark:bg-[#0F172A]/50 backdrop-blur-sm z-20">
-            <Keyboard className="w-16 h-16 text-slate-400 mb-4 opacity-50" />
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">Bubble Shoot</h3>
-            <p className="text-slate-500 max-w-md text-center mb-6">Type the words inside the bubbles to pop them before they float away! Make a mistake, and your input resets.</p>
-            <p className="text-blue-500 font-medium animate-pulse">Start typing to begin</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20 backdrop-blur-sm">
+            <h3 className="text-5xl font-bold text-white mb-2 drop-shadow-[0_0_15px_rgba(52,211,153,0.8)]">Spirit Catch</h3>
+            <p className="text-slate-300 max-w-md text-center mb-6">Type the words inside the mystical spirits to catch them before they float away! Make a mistake, and your input resets.</p>
+            <button onClick={startGame} className="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.5)]">
+              Enter Forest
+            </button>
           </div>
         )}
 
-        {bubbles.map(bubble => {
-          const isTargeted = userInput.length > 0 && bubble.word.startsWith(userInput);
-          
-          return (
-            <div
-              key={bubble.id}
-              className={`absolute flex items-center justify-center rounded-full border-2 transition-transform ${bubble.colorClass} ${isTargeted ? 'scale-110 shadow-[0_0_20px_rgba(59,130,246,0.5)] border-blue-500 z-10' : 'opacity-80'}`}
-              style={{
-                left: bubble.x,
-                top: bubble.y,
-                width: bubble.size,
-                height: bubble.size,
-                boxShadow: 'inset 0 0 20px rgba(255,255,255,0.2)'
-              }}
-            >
-              <div className="absolute top-[15%] left-[20%] w-[20%] h-[20%] bg-white/30 rounded-full blur-[2px]"></div>
-              <span className={`font-medium ${settings.language === 'hindi' ? '' : 'font-mono'} ${isTargeted ? 'text-lg font-bold' : 'text-base'}`}>
-                {isTargeted ? (
-                  <>
-                    <span className="text-slate-900 dark:text-white">{userInput}</span>
-                    <span className="opacity-50">{bubble.word.slice(userInput.length)}</span>
-                  </>
-                ) : (
-                  bubble.word
-                )}
-              </span>
-            </div>
-          );
-        })}
-
         {status === 'finished' && (
-          <div className="absolute inset-0 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md z-30 flex flex-col items-center justify-center rounded-3xl">
-            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">Game Over!</h2>
-            <p className="text-slate-500 mb-8">You popped {score} bubbles.</p>
-            <button
-              onClick={resetGame}
-              className="px-8 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors"
-            >
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 backdrop-blur-md">
+            <h3 className="text-4xl font-bold text-emerald-400 mb-2 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]">Time's Up!</h3>
+            <p className="text-slate-300 mb-8">You caught {score} spirits.</p>
+            <button onClick={startGame} className="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.5)]">
               Play Again
             </button>
           </div>
         )}
+
+        {/* Spirits */}
+        {bubbles.map(bubble => {
+          const isTargeted = userInput.length > 0 && bubble.word.startsWith(userInput);
+          return (
+            <div 
+              key={bubble.id}
+              className={`absolute flex flex-col items-center justify-center rounded-full border transition-transform duration-300 z-10 ${bubble.colorClass} ${isTargeted ? 'scale-125 border-white drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] z-20 animate-pulse' : 'opacity-90'}`}
+              style={{ 
+                left: bubble.x, 
+                top: bubble.y,
+                width: bubble.size,
+                height: bubble.size,
+                fontFamily: settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? "'Kruti Dev 010', 'Kruti Dev', sans-serif" : "'Mangal', sans-serif") : (settings.fontFamily || 'font-fira')
+              }}
+            >
+              <div className="absolute inset-0 rounded-full bg-white/10 pointer-events-none"></div>
+              <div className="font-bold text-lg relative z-10 text-center px-2 word-break">
+                {isTargeted ? (
+                  <>
+                    <span className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,1)]">{userInput}</span>
+                    <span className="opacity-60">{bubble.word.slice(userInput.length)}</span>
+                  </>
+                ) : (
+                  bubble.word
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <input
-        ref={inputRef}
-        type="text"
-        value={userInput}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        className="absolute inset-0 w-full h-full opacity-0 bg-transparent text-transparent border-none outline-none cursor-default sm:cursor-text z-10 resize-none"
-        autoComplete="off"
-        disabled={status === 'finished'}
-      />
-      
-      <div className="mt-6 text-2xl font-mono text-slate-800 dark:text-slate-200 h-8 flex items-center justify-center w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-        {userInput || <span className="text-slate-400 opacity-50">...</span>}
-      </div>
-
-      {/* Restart Control */}
-      <div className="mt-8 flex justify-center w-full opacity-60 hover:opacity-100 transition-opacity">
-        <button 
-          onClick={resetGame}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-200/50 hover:bg-slate-200 dark:bg-slate-800/50 dark:hover:bg-slate-700 transition-all font-medium text-sm border border-slate-300/50 dark:border-slate-700/50"
-          title="Restart Game (Esc)"
-        >
-          <RotateCcw className="w-4 h-4" />
-          <span>Restart Game (Esc)</span>
-        </button>
+      {/* Typing Input */}
+      <div className="w-full max-w-4xl mt-4 z-20">
+        <input ref={inputRef} 
+          type="text"
+          value={userInput}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          className="w-full bg-slate-900/80 backdrop-blur-md border border-slate-700/50 text-emerald-400 px-6 py-4 rounded-2xl text-xl font-bold focus:outline-none focus:border-emerald-500 shadow-xl text-center"
+          placeholder="Type to catch the spirits..."
+          autoComplete="off"
+          spellCheck="false"
+        />
       </div>
     </div>
   );

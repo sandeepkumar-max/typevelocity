@@ -1,3 +1,6 @@
+const fs = require('fs');
+
+const newFirebaseTs = `
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
@@ -40,3 +43,6 @@ console.error = (...args) => {
   }
   originalConsoleError(...args);
 };
+`;
+
+fs.writeFileSync('src/lib/firebase.ts', newFirebaseTs.trim() + '\\n');

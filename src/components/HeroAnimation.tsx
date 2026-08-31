@@ -47,7 +47,7 @@ export default function HeroAnimation() {
   }, []);
 
   return (
-    <div className="relative w-full h-[400px] flex items-center justify-center perspective-1000">
+    <div className="relative w-full h-[300px] sm:h-[400px] flex items-center justify-center perspective-1000">
             
       {/* Floating Particles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
@@ -59,7 +59,7 @@ export default function HeroAnimation() {
               animate={{ opacity: [0, 1, 0], y: -200, scale: 1.5, rotate: Math.random() * 45 - 22.5 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 2, ease: "easeOut" }}
-              className="absolute bottom-1/2 text-2xl font-bold text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
+              className="absolute bottom-1/2 text-xl sm:text-2xl font-bold text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
               style={{ left: `${p.x}%` }}
             >
               {p.char}
@@ -73,15 +73,15 @@ export default function HeroAnimation() {
         initial={{ rotateX: 20, rotateY: -15, rotateZ: 5 }}
         animate={{ rotateX: [20, 25, 20], rotateY: [-15, -10, -15] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="relative bg-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10"
+        className="relative bg-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md p-3 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10 max-w-[95vw] sm:max-w-none"
         style={{ transformStyle: 'preserve-3d' }}
       >
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-500/10 to-sky-500/10 pointer-events-none" />
+        <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-500/10 to-sky-500/10 pointer-events-none" />
                 
         {/* Keyboard Keys */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1 sm:gap-3">
           {keyboardRows.map((row, rIdx) => (
-            <div key={rIdx} className={`flex gap-3 justify-center ${rIdx === 1 ? 'ml-4' : ''} ${rIdx === 2 ? 'ml-8' : ''}`}>
+            <div key={rIdx} className={`flex gap-1 sm:gap-3 justify-center ${rIdx === 1 ? 'ml-1 sm:ml-4' : ''} ${rIdx === 2 ? 'ml-2 sm:ml-8' : ''}`}>
               {row.map(char => {
                 const isActive = activeKeys.includes(char);
                 return (
@@ -95,7 +95,7 @@ export default function HeroAnimation() {
                     }}
                     transition={{ type: "spring", stiffness: 400, damping: 20 }}
                     className={`
-                      w-12 h-12 rounded-xl border flex items-center justify-center text-sm font-bold shadow-lg
+                      w-6 h-6 sm:w-12 sm:h-12 rounded-md sm:rounded-xl border flex items-center justify-center text-[10px] sm:text-sm font-bold shadow-lg
                       ${isActive ? 'text-white shadow-[0_0_15px_rgba(59,130,246,0.6)]' : 'text-slate-400 dark:text-slate-500'}
                       backdrop-blur-sm
                     `}
@@ -107,14 +107,14 @@ export default function HeroAnimation() {
             </div>
           ))}
           {/* Spacebar */}
-          <div className="flex gap-3 justify-center mt-1">
+          <div className="flex gap-1 sm:gap-3 justify-center mt-1 sm:mt-2">
              <motion.div
                 animate={{
                   y: activeKeys.length > 0 && Math.random() > 0.7 ? 4 : 0, // randomly press spacebar
                   backgroundColor: 'rgba(255, 255, 255, 0.05)',
                   borderColor: 'rgba(255, 255, 255, 0.1)'
                 }}
-                className="w-64 h-12 rounded-xl border flex items-center justify-center shadow-lg backdrop-blur-sm"
+                className="w-32 sm:w-64 h-6 sm:h-12 rounded-md sm:rounded-xl border flex items-center justify-center shadow-lg backdrop-blur-sm"
               />
           </div>
         </div>

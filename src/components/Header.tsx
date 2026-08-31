@@ -38,6 +38,15 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
         await signInWithPopup(auth, provider);
       }
     } catch (error: any) {
+      if (error.code === 'auth/popup-blocked') {
+        toast('Popup blocked by browser. Redirecting instead...', { icon: '🔄' });
+        try {
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectError) {
+           console.error('Redirect also failed', redirectError);
+        }
+      }
       if (error.code === 'auth/popup-closed-by-user') {
         toast.error('Login popup was closed. If you are on mobile, try again.');
         return;
@@ -64,9 +73,9 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
   const navItems = [
     { id: 'guide', label: 'Guide', icon: BookOpen },
     { id: 'practice', label: 'Practice', icon: Keyboard },
-    { id: 'meteor', label: 'Meteor Drop', icon: Play },
+    { id: 'meteor', label: 'Drop Ninja', icon: Play },
     { id: 'sprint', label: 'Neon Sprint', icon: Trophy },
-    { id: 'bubble', label: 'Bubble Shoot', icon: Play },
+    { id: 'bubble', label: 'Spirit Catch', icon: Play },
   ] as const;
 
   return (
@@ -148,7 +157,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
                       <UserCircle className="w-5 h-5 text-slate-500 dark:text-slate-300" />
                     </div>
                   )}
-                  <span className="text-sm font-medium hidden sm:block max-w-[100px] truncate text-slate-700 dark:text-slate-200">
+                  <span className="text-sm font-medium hidden sm:block whitespace-nowrap sm:whitespace-normal max-w-[120px] sm:max-w-[180px] break-words text-left leading-tight text-slate-700 dark:text-slate-200">
                     {user.displayName || 'User'}
                   </span>
                 </button>

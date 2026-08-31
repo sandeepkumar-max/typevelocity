@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
   return {
-    base: '/typevelocity/',
+    base: '/',
     plugins: [
       react(), 
       tailwindcss(),
@@ -21,7 +21,7 @@ export default defineConfig(() => {
           display: 'standalone',
           icons: [
             {
-              src: '/typevelocity/icon.svg',
+              src: '/icon.svg',
               sizes: 'any',
               type: 'image/svg+xml',
               purpose: 'any maskable'

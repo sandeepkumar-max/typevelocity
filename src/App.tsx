@@ -12,6 +12,8 @@ import TypingGuide from './components/TypingGuide';
 import LessonList from './components/LessonList';
 import LessonPractice from './components/LessonPractice';
 import HeroAnimation from './components/HeroAnimation';
+import DailyMissions from './components/DailyMissions';
+import { updateMissionProgress } from './utils/missions';
 
 import { auth, db } from './lib/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -36,7 +38,7 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [lastSession, setLastSession] = useState<SessionStats | null>(null);
   const [currentLessonId, setCurrentLessonId] = useState<number>(1);
-  const [courseType, setCourseType] = useState<'mangal' | 'krutidev'>('mangal');
+  const [courseType, setCourseType] = useState<'mangal' | 'krutidev' | 'english'>('english');
 
   const themeClasses = theme === 'dark' 
     ? "bg-[#0F172A] text-slate-200" 
@@ -49,6 +51,7 @@ export default function App() {
     if (auth.currentUser) {
       try {
         const sessionRef = doc(collection(db, 'users', auth.currentUser.uid, 'sessions'));
+        await updateMissionProgress(auth.currentUser.uid, stats);
         await setDoc(sessionRef, {
           userId: auth.currentUser.uid,
           mode: stats.mode,
@@ -79,7 +82,7 @@ export default function App() {
                </span>
                New: Meteor Drop & Neon Sprint modes available!
              </div>
-             <h1 className="text-5xl sm:text-6xl xl:text-7xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1]">
+             <h1 className="text-4xl sm:text-6xl xl:text-7xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1]">
                Type Faster, <br className="hidden sm:block" />
                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-sky-400">Think Clearer.</span>
              </h1>
@@ -87,12 +90,15 @@ export default function App() {
                TypeVelocity is a professional typing platform designed to enhance your speed and accuracy. Gamified exercises, competitive sprints, and detailed analytics.
              </p>
              
-             <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full sm:w-auto pt-4 justify-center xl:justify-start">
+             <div className="w-full flex flex-col items-center xl:items-start space-y-8">
+              <DailyMissions />
+            </div>
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full sm:w-auto pt-4 justify-center xl:justify-start">
                <button onClick={() => setCurrentView('practice')} className="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg hover:bg-blue-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2">
                  Start Typing <Keyboard className="w-5 h-5" />
                </button>
                <button onClick={() => setCurrentView('lessons')} className="px-8 py-4 bg-emerald-600 text-white rounded-full font-bold text-lg hover:bg-emerald-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2">
-                 Learn Hindi Levels
+                 Learn Typing Levels
                </button>
              </div>
            </div>
@@ -170,7 +176,7 @@ export default function App() {
           setCurrentView('lesson-practice');
         }} 
       />;
-      case 'lesson-practice': return <LessonPractice 
+      case 'lesson-practice': return <LessonPractice key={currentLessonId} 
         lessonId={currentLessonId} 
         courseType={courseType}
         onBack={() => setCurrentView('lessons')} 

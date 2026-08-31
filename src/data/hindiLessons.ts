@@ -5,6 +5,7 @@ export interface Lesson {
   keysFocused: string;
   content: string;
   hintMap: Record<string, string>;
+  videoUrl?: string;
 }
 
 export const mangalLessons: Lesson[] = [

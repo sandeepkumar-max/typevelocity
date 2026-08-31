@@ -42,7 +42,7 @@ export default function InstallButton({ theme, variant = 'sidebar' }: { theme?: 
         onClick={handleInstallClick}
         
         title="Install App"
-        className="hidden md:flex items-center justify-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors "
+        className="flex items-center justify-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors "
       >
         <Download className="w-4 h-4" />
         <span>Install</span>

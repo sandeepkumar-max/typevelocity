@@ -1,6 +1,8 @@
 {
-  "name": "TypeVelocity",
-  "description": "A highly interactive typing practice application with mini-games, glassmorphism design, and real-time stats.",
+  "name": "TypeVelocity - Best Online Typing Tutor & Speed Test",
+  "description": "Master your typing speed with TypeVelocity. Free online typing tutor, WPM tests, and typing games for English and Hindi (Mangal). Improve your accuracy today!",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
