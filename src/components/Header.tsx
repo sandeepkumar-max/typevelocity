@@ -47,8 +47,9 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
            console.error('Redirect also failed', redirectError);
         }
       }
-      if (error.code === 'auth/popup-closed-by-user') {
-        toast.error('Login popup was closed. If you are on mobile, try again.');
+      if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+        // Silently ignore benign user actions or rapid double-clicks
+        console.log('Popup closed or request cancelled.');
         return;
       }
       if (error.code === 'auth/unauthorized-domain') {
@@ -87,19 +88,20 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
               <Menu className="h-6 w-6" />
             </button>
             
-            <div className="flex items-center cursor-pointer mr-6" onClick={() => onViewChange('home')}>
+            <a href="/" className="flex items-center cursor-pointer mr-6" onClick={(e) => { e.preventDefault(); onViewChange('home'); }}>
               <Keyboard className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
               <span className="text-xl font-bold tracking-tight hidden sm:block">
                 Type<span className="text-blue-600 dark:text-blue-400">Velocity</span>
               </span>
-            </div>
+            </a>
 
             {/* Desktop Nav for games */}
             <nav className="hidden md:flex space-x-1">
               {navItems.map((item) => (
-                <button
+                <a
+                  href={`/${item.id}`}
                   key={item.id}
-                  onClick={() => onViewChange(item.id as ViewState)}
+                  onClick={(e) => { e.preventDefault(); onViewChange(item.id as ViewState); }}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2
                     ${currentView === item.id 
                       ? 'bg-black/10 dark:bg-white/10 text-blue-600 dark:text-blue-400' 
@@ -107,7 +109,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
-                </button>
+                </a>
               ))}
             </nav>
           </div>
@@ -151,7 +153,7 @@ export default function Header({ currentView, onViewChange, theme, onThemeToggle
                   title="Edit Profile"
                 >
                   {user.photoURL ? (
-                     <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full border border-blue-500 object-cover" />
+                     <img src={user.photoURL} alt={user.displayName || "User profile picture"} className="w-8 h-8 rounded-full border border-blue-500 object-cover" />
                   ) : (
                     <div className="w-8 h-8 rounded-full border border-blue-500 bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                       <UserCircle className="w-5 h-5 text-slate-500 dark:text-slate-300" />

@@ -1,35 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import { ViewState, GameSettings, SessionStats } from './types';
-import PracticeArea from './components/PracticeArea';
-import MeteorDrop from './components/MeteorDrop';
-import BubbleShoot from './components/BubbleShoot';
-import NeonSprint from './components/NeonSprint';
-import StatsView from './components/StatsView';
-import TypingGuide from './components/TypingGuide';
-import LessonList from './components/LessonList';
-import LessonPractice from './components/LessonPractice';
-import HeroAnimation from './components/HeroAnimation';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import DailyMissions from './components/DailyMissions';
 import { updateMissionProgress } from './utils/missions';
 
 import { auth, db } from './lib/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Keyboard } from 'lucide-react';
+import { Keyboard, Loader2 } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
+// Lazy load heavy views
+const PracticeArea = lazy(() => import('./components/PracticeArea'));
+const MeteorDrop = lazy(() => import('./components/MeteorDrop'));
+const BubbleShoot = lazy(() => import('./components/BubbleShoot'));
+const NeonSprint = lazy(() => import('./components/NeonSprint'));
+const StatsView = lazy(() => import('./components/StatsView'));
+const TypingGuide = lazy(() => import('./components/TypingGuide'));
+const LessonList = lazy(() => import('./components/LessonList'));
+const LessonPractice = lazy(() => import('./components/LessonPractice'));
+const HeroAnimation = lazy(() => import('./components/HeroAnimation'));
+
 export default function App() {
-  const [currentView, setCurrentView] = useState<ViewState>('home');
+  const [currentView, setCurrentView] = useState<ViewState>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname.replace('/', '');
+      const validViews = ['home', 'practice', 'meteor', 'sprint', 'bubble', 'about', 'help', 'contact', 'stats', 'guide', 'lessons', 'lesson-practice', 'privacy', 'terms'];
+      if (validViews.includes(path)) return path as ViewState;
+    }
+    return 'home';
+  });
   const [settings, setSettings] = useState<GameSettings>({
     difficulty: 'easy',
     time: 30,
     easyCase: 'lower',
-    soundEnabled: true,
+    soundEnabled: false,
     backspaceLock: false,
-    autoScroll: true,
+    autoScroll: typeof window !== 'undefined' ? window.innerWidth > 768 : true,
     fontFamily: 'font-fira',
     language: 'english',
     hindiFont: 'mangal'
@@ -68,6 +78,68 @@ export default function App() {
       }
     }
   };
+
+    // SEO & Routing Effect
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Update URL
+    const path = currentView === 'home' ? '/' : `/${currentView}`;
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, '', path);
+    }
+
+    // Update Title and Meta
+    const titles: Record<string, string> = {
+      home: 'TypeVelocity - Best Online Typing Tutor & Speed Test',
+      practice: 'Typing Practice - Test your WPM | TypeVelocity',
+      meteor: 'Meteor Drop - Typing Game | TypeVelocity',
+      sprint: 'Neon Sprint - Typing Game | TypeVelocity',
+      bubble: 'Spirit Catch - Typing Game | TypeVelocity',
+      guide: 'Typing Guide - Learn Touch Typing | TypeVelocity',
+      about: 'About Us | TypeVelocity',
+      privacy: 'Privacy Policy | TypeVelocity',
+      terms: 'Terms & Conditions | TypeVelocity'
+    };
+    
+    const descriptions: Record<string, string> = {
+      home: 'Master your typing speed with TypeVelocity. Free online typing tutor, WPM tests, and typing games.',
+      practice: 'Take a free typing test to find out your WPM and accuracy. Practice English and Hindi typing.',
+      meteor: 'Defend against falling words in this fast-paced typing survival game.',
+      sprint: 'Race against the clock in short, high-intensity typing bursts to maximize speed.',
+      guide: 'Learn the fundamentals of touch typing, finger placement, and posture to type faster.'
+    };
+
+    document.title = titles[currentView] || 'TypeVelocity - Typing Tutor';
+    
+    const desc = descriptions[currentView] || descriptions.home;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', desc);
+    }
+    
+    let ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', document.title);
+    
+    let ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute('content', desc);
+
+  }, [currentView]);
+
+  // Handle Popstate (Back/Forward buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.replace('/', '');
+      const validViews = ['home', 'practice', 'meteor', 'sprint', 'bubble', 'about', 'help', 'contact', 'stats', 'guide', 'lessons', 'lesson-practice', 'privacy', 'terms'];
+      if (validViews.includes(path)) {
+        setCurrentView(path as ViewState);
+      } else {
+        setCurrentView('home');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const renderContent = () => {
     switch (currentView) {
@@ -110,7 +182,7 @@ export default function App() {
       );
       case 'about': return (
         <div className="glass-panel p-8 sm:p-12 rounded-2xl w-full max-w-4xl mx-auto mt-4 sm:mt-8 space-y-6">
-           <h2 className="text-3xl font-bold">About TypeVelocity</h2>
+           <h1 className="text-3xl font-bold">About TypeVelocity</h1>
            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">TypeVelocity is a next-generation typing trainer designed to make improving your typing speed fun and effective. We combine aesthetic UI with real-time feedback and engaging gamified experiences.</p>
            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
               <div className="p-4 bg-black/5 dark:bg-white/5 rounded-xl border border-black/10 dark:border-white/10">
@@ -130,7 +202,7 @@ export default function App() {
       );
       case 'help': return (
         <div className="glass-panel p-8 sm:p-12 rounded-2xl w-full max-w-4xl mx-auto mt-4 sm:mt-8 space-y-6">
-           <h2 className="text-3xl font-bold">Help & Support</h2>
+           <h1 className="text-3xl font-bold">Help & Support</h1>
            <div className="space-y-4">
               <div className="p-4 border border-black/10 dark:border-white/10 rounded-lg">
                  <h3 className="font-bold text-lg mb-2 text-sky-600 dark:text-sky-400">How do I start a test?</h3>
@@ -145,7 +217,7 @@ export default function App() {
       );
       case 'contact': return (
         <div className="glass-panel p-8 sm:p-12 rounded-2xl w-full max-w-4xl mx-auto mt-4 sm:mt-8 space-y-6">
-           <h2 className="text-3xl font-bold mb-4">Contact Us</h2>
+           <h1 className="text-3xl font-bold mb-4">Contact Us</h1>
            <form className="space-y-4 max-w-md" onSubmit={(e) => e.preventDefault()}>
               <div>
                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
@@ -161,6 +233,38 @@ export default function App() {
               </div>
               <button className="px-6 py-2 bg-blue-500 text-slate-900 rounded-lg font-bold hover:bg-blue-400 transition-colors w-full sm:w-auto">Send Message</button>
            </form>
+        </div>
+      );
+      case 'privacy': return (
+        <div className="glass-panel p-8 sm:p-12 rounded-2xl w-full max-w-4xl mx-auto mt-4 sm:mt-8 space-y-6 text-slate-800 dark:text-slate-200">
+           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">Privacy Policy</h1>
+           <p>Last updated: {new Date().toLocaleDateString()}</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">1. Information We Collect</h3>
+           <p>TypeVelocity collects basic profile information (such as name and email) when you choose to log in using Google or Email authentication. We also store your typing performance data (WPM, accuracy, history) to provide you with personal statistics.</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">2. How We Use Information</h3>
+           <p>We use your information exclusively to provide, maintain, and improve the TypeVelocity typing platform. We do not sell your personal data to third parties.</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">3. Data Security</h3>
+           <p>Your data is securely stored using Google Firebase. We implement standard industry security measures to protect your information.</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">4. Third-Party Ads (AdSense)</h3>
+           <p>We may use Google AdSense to display ads. Google may use cookies to serve ads based on your prior visits to our website or other websites.</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">5. Contact Us</h3>
+           <p>If you have any questions about this Privacy Policy, please contact us via the Contact page.</p>
+        </div>
+      );
+      case 'terms': return (
+        <div className="glass-panel p-8 sm:p-12 rounded-2xl w-full max-w-4xl mx-auto mt-4 sm:mt-8 space-y-6 text-slate-800 dark:text-slate-200">
+           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">Terms & Conditions</h1>
+           <p>Last updated: {new Date().toLocaleDateString()}</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">1. Acceptance of Terms</h3>
+           <p>By accessing and using TypeVelocity, you accept and agree to be bound by the terms and provision of this agreement.</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">2. Use License</h3>
+           <p>Permission is granted to temporarily use the materials on TypeVelocity's website for personal, non-commercial transitory viewing only.</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">3. Disclaimer</h3>
+           <p>The materials on TypeVelocity's website are provided on an 'as is' basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose.</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">4. Limitations</h3>
+           <p>In no event shall TypeVelocity or its suppliers be liable for any damages arising out of the use or inability to use the materials on TypeVelocity's website.</p>
+           <h3 className="text-xl font-bold mt-6 mb-2">5. Modifications</h3>
+           <p>TypeVelocity may revise these terms of service for its website at any time without notice. By using this website you are agreeing to be bound by the then current version of these terms of service.</p>
         </div>
       );
       case 'practice': return <PracticeArea settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
@@ -205,7 +309,7 @@ export default function App() {
           rotate: [0, 90, 0]
         }}
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-sky-500/20 blur-[120px] pointer-events-none"
+        className="hidden sm:block fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-sky-500/20 blur-[120px] pointer-events-none"
       ></motion.div>
       <motion.div 
         animate={{ 
@@ -214,7 +318,7 @@ export default function App() {
           rotate: [0, -90, 0]
         }}
         transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none"
+        className="hidden sm:block fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none"
       ></motion.div>
 
       <Sidebar 
@@ -237,7 +341,11 @@ export default function App() {
         />
         
         <main className="flex-grow flex flex-col py-8 px-4 sm:px-6 lg:px-8 w-full">
-          {renderContent()}
+          <ErrorBoundary>
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center min-h-[50vh]"><Loader2 className="w-10 h-10 animate-spin text-blue-500" /></div>}>
+              {renderContent()}
+            </Suspense>
+          </ErrorBoundary>
         </main>
         <Footer onViewChange={setCurrentView} />
       </div>

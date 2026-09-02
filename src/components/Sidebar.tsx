@@ -44,12 +44,12 @@ export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, 
         ${theme === 'light' ? 'bg-white/80' : 'bg-[#0F172A]/90'}
       `}>
         <div className="p-4 flex items-center justify-between border-b border-white/10 h-16">
-          <div className="flex items-center cursor-pointer" onClick={() => { onViewChange('home'); closeSidebar(); }}>
+          <a href="/" className="flex items-center cursor-pointer" onClick={(e) => { e.preventDefault(); onViewChange('home'); closeSidebar(); }}>
             <Keyboard className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
             <span className="text-xl font-bold tracking-tight">
               Type<span className="text-blue-600 dark:text-blue-400">Velocity</span>
             </span>
-          </div>
+          </a>
           <button onClick={closeSidebar} className="text-slate-400 hover:text-white">
             <X className="h-6 w-6" />
           </button>
@@ -58,9 +58,10 @@ export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, 
         <nav className="p-4 space-y-2 mt-4">
           <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 px-3">Menu</div>
           {menuItems.map((item) => (
-            <button
+            <a
+              href={`/${item.id}`}
               key={item.id}
-              onClick={() => { onViewChange(item.id as ViewState); closeSidebar(); }}
+              onClick={(e) => { e.preventDefault(); onViewChange(item.id as ViewState); closeSidebar(); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 currentView === item.id 
                   ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 shadow-[inset_0_0_10px_rgba(59, 130, 246,0.2)]'
@@ -71,7 +72,7 @@ export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, 
             >
               <item.icon className={`h-5 w-5 ${currentView === item.id ? 'text-blue-600 dark:text-blue-400' : ''}`} />
               {item.label}
-            </button>
+            </a>
           ))}
         </nav>
         <InstallButton theme={theme} />

@@ -25,6 +25,16 @@ export default defineConfig(() => {
               sizes: 'any',
               type: 'image/svg+xml',
               purpose: 'any maskable'
+            },
+            {
+              src: '/icon-192.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: '/icon-512.png',
+              sizes: '512x512',
+              type: 'image/png'
             }
           ]
         }
@@ -39,5 +49,15 @@ export default defineConfig(() => {
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore']
+          }
+        }
+      }
+    }
   };
 });

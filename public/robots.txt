@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://typevelocity.com/sitemap.xml
+Sitemap: https://typevelocity.in/sitemap.xml

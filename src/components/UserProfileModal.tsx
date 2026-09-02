@@ -108,7 +108,7 @@ export default function UserProfileModal({ user, onClose }: UserProfileModalProp
             <div className="relative group">
               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-[#0F172A] shadow-xl bg-slate-100 dark:bg-slate-800 transition-transform duration-300 group-hover:scale-[1.02]">
                 {photoURL ? (
-                  <img src={photoURL} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={photoURL} alt={displayName || "User profile picture"} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
                     <UserIcon className="w-12 h-12 opacity-50" />

@@ -319,10 +319,9 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
           return (
             <div 
               key={bubble.id}
-              className={`absolute flex flex-col items-center justify-center rounded-full border transition-transform duration-300 z-10 ${bubble.colorClass} ${isTargeted ? 'scale-125 border-white drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] z-20 animate-pulse' : 'opacity-90'}`}
+              className={`absolute top-0 left-0 flex flex-col items-center justify-center rounded-full border transition-transform duration-300 z-10 will-change-transform ${bubble.colorClass} ${isTargeted ? 'scale-125 border-white drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] z-20 animate-pulse' : 'opacity-90'}`}
               style={{ 
-                left: bubble.x, 
-                top: bubble.y,
+                transform: `translate3d(${bubble.x}px, ${bubble.y}px, 0)`,
                 width: bubble.size,
                 height: bubble.size,
                 fontFamily: settings.language === 'hindi' ? (settings.hindiFont === 'krutidev' ? "'Kruti Dev 010', 'Kruti Dev', sans-serif" : "'Mangal', sans-serif") : (settings.fontFamily || 'font-fira')
@@ -347,15 +346,13 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
       {/* Typing Input */}
       <div className="w-full max-w-4xl mt-4 z-20">
         <input ref={inputRef} 
-          type="text"
+          type="text" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} data-gramm="false"
           value={userInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           autoFocus
           className="w-full bg-slate-900/80 backdrop-blur-md border border-slate-700/50 text-emerald-400 px-6 py-4 rounded-2xl text-xl font-bold focus:outline-none focus:border-emerald-500 shadow-xl text-center"
           placeholder="Type to catch the spirits..."
-          autoComplete="off"
-          spellCheck="false"
         />
       </div>
     </div>

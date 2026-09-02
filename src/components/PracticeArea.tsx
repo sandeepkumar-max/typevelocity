@@ -296,15 +296,11 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
         
         <input
           ref={inputRef}
-          type="text"
+          type="text" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} data-gramm="false"
           value={userInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           className="absolute inset-0 w-full h-full opacity-0 bg-transparent text-transparent border-none outline-none cursor-default sm:cursor-text z-10 resize-none"
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck="false"
           disabled={status === 'finished'}
         />
         {renderText()}

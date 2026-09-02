@@ -264,8 +264,8 @@ export default function NeonSprint({ settings, onSettingsChange, onComplete }: N
 
         {/* Realistic Sports Car */}
         <div 
-          className="absolute transition-all duration-300 ease-out z-10 flex items-center justify-center"
-          style={{ left: `calc(${progress}% - 30px)` }}
+          className="absolute bottom-0 left-0 transition-all duration-300 ease-out z-10 flex items-center justify-center will-change-transform"
+          style={{ transform: `translate3d(calc(${progress}vw - 30px), 0, 0)` }}
         >
           <svg viewBox="0 0 100 35" className="w-24 sm:w-32 h-auto drop-shadow-[0_0_15px_rgba(59,130,246,0.8)] z-20 transition-all duration-300">
             <defs>
@@ -319,12 +319,12 @@ export default function NeonSprint({ settings, onSettingsChange, onComplete }: N
       <div className="w-full relative cursor-text" onClick={() => inputRef.current?.focus()}>
         <input
           ref={inputRef}
-          type="text"
+          type="text" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} data-gramm="false"
           value={userInput}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           className="absolute inset-0 w-full h-full opacity-0 bg-transparent text-transparent border-none outline-none cursor-default sm:cursor-text z-10 resize-none"
-          autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" data-gramm="false"
+         
           disabled={status === 'finished'}
         />
         

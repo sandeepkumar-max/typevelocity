@@ -1,4 +1,5 @@
 let sharedAudioCtx: AudioContext | null = null;
+let cachedNoiseBuffer: AudioBuffer | null = null;
 
 const getAudioContext = () => {
   if (!sharedAudioCtx) {
@@ -14,6 +15,29 @@ const getAudioContext = () => {
   return sharedAudioCtx;
 };
 
+// Initialize audio context on first user interaction to ensure zero latency later
+if (typeof window !== 'undefined') {
+  const initAudio = () => {
+    getAudioContext();
+    window.removeEventListener('pointerdown', initAudio);
+    window.removeEventListener('keydown', initAudio);
+  };
+  window.addEventListener('pointerdown', initAudio, { once: true });
+  window.addEventListener('keydown', initAudio, { once: true });
+}
+
+const getNoiseBuffer = (audioCtx: AudioContext) => {
+  if (cachedNoiseBuffer) return cachedNoiseBuffer;
+  const bufferSize = audioCtx.sampleRate * 0.05; // 50ms
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  cachedNoiseBuffer = buffer;
+  return buffer;
+};
+
 export const playKeystrokeSound = () => {
   try {
     const audioCtx = getAudioContext();
@@ -22,15 +46,9 @@ export const playKeystrokeSound = () => {
     const t = audioCtx.currentTime;
     
     // 1. Noise component (the 'click' of the switch)
-    const bufferSize = audioCtx.sampleRate * 0.05; // 50ms
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-    
     const noise = audioCtx.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = getNoiseBuffer(audioCtx);
+
     
     const noiseFilter = audioCtx.createBiquadFilter();
     noiseFilter.type = 'bandpass';

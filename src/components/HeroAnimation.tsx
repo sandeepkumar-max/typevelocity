@@ -13,7 +13,9 @@ export default function HeroAnimation() {
   let particleCounter = 0;
 
   useEffect(() => {
+    const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
     const typeInterval = setInterval(() => {
+      if (isMobile && Math.random() > 0.5) return; // Skip half the frames on mobile
       // Randomly press 1-2 keys
       const numKeys = Math.random() > 0.5 ? 1 : 2;
       const newActive: string[] = [];
@@ -55,7 +57,7 @@ export default function HeroAnimation() {
           {particles.map(p => (
             <motion.div
               key={p.id}
-              initial={{ opacity: 0, y: 100, x: `${p.x}%`, scale: 0.5 }}
+              initial={{ opacity: 0, y: 100, scale: 0.5 }}
               animate={{ opacity: [0, 1, 0], y: -200, scale: 1.5, rotate: Math.random() * 45 - 22.5 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 2, ease: "easeOut" }}
@@ -73,7 +75,7 @@ export default function HeroAnimation() {
         initial={{ rotateX: 20, rotateY: -15, rotateZ: 5 }}
         animate={{ rotateX: [20, 25, 20], rotateY: [-15, -10, -15] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="relative bg-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md p-3 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10 max-w-[95vw] sm:max-w-none"
+        className="relative bg-slate-800 dark:bg-slate-900 sm:bg-slate-800/80 sm:dark:bg-slate-900/80 sm:backdrop-blur-md p-3 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10 max-w-[95vw] sm:max-w-none"
         style={{ transformStyle: 'preserve-3d' }}
       >
         <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-500/10 to-sky-500/10 pointer-events-none" />
@@ -121,7 +123,7 @@ export default function HeroAnimation() {
       </motion.div>
 
       {/* Glow Effect underneath */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/20 blur-[100px] rounded-full -z-10 pointer-events-none" />
+      <div className="hidden sm:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/20 blur-[100px] rounded-full -z-10 pointer-events-none" />
     </div>
   );
 }
