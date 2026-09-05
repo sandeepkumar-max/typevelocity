@@ -10,8 +10,8 @@ export default function Footer({ onViewChange }: FooterProps) {
   return (
     <footer className="w-full glass-panel border-t border-slate-200 dark:border-white/10 mt-auto py-4 z-10 relative">
       <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-        <a href="/" className="flex items-center gap-2 cursor-pointer hover:text-blue-500 transition-colors" onClick={(e) => { e.preventDefault(); onViewChange('home'); }}>
-          <Keyboard className="h-4 w-4" />
+        <a href="/" className="flex items-center gap-2 cursor-pointer hover:text-blue-500 transition-colors group" onClick={(e) => { e.preventDefault(); onViewChange('home'); }}>
+          <img src="/icon.svg" alt="TypeVelocity Logo" className="h-5 w-5 object-contain transition-transform group-hover:scale-105" />
           <span className="font-semibold">TypeVelocity</span>
         </a>
         

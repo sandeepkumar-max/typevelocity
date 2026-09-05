@@ -1,7 +1,7 @@
 import React from 'react';
 import { ViewState } from '../types';
 import InstallButton from './InstallButton';
-import { Home, Keyboard, Info, HelpCircle, Mail, X, Play, Trophy, BarChart2, BookOpen } from 'lucide-react';
+import { Home, Keyboard, Info, HelpCircle, Mail, X, Play, Trophy, BarChart2, BookOpen, Zap } from 'lucide-react';
 
 interface SidebarProps {
   currentView: ViewState;
@@ -16,6 +16,7 @@ export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, 
     { id: 'home', label: 'Home', icon: Home },
     { id: 'guide', label: 'Typing Guide', icon: BookOpen },
     { id: 'practice', label: 'Practice', icon: Keyboard },
+    { id: 'arena', label: 'Typing Arena', icon: Zap },
     { id: 'meteor', label: 'Drop Ninja', icon: Play },
     { id: 'sprint', label: 'Neon Sprint', icon: Trophy },
     { id: 'bubble', label: 'Spirit Catch', icon: Play },
@@ -44,8 +45,8 @@ export default function Sidebar({ currentView, onViewChange, isOpen, setIsOpen, 
         ${theme === 'light' ? 'bg-white/80' : 'bg-[#0F172A]/90'}
       `}>
         <div className="p-4 flex items-center justify-between border-b border-white/10 h-16">
-          <a href="/" className="flex items-center cursor-pointer" onClick={(e) => { e.preventDefault(); onViewChange('home'); closeSidebar(); }}>
-            <Keyboard className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
+          <a href="/" className="flex items-center cursor-pointer group" onClick={(e) => { e.preventDefault(); onViewChange('home'); closeSidebar(); }}>
+            <img src="/icon.svg" alt="TypeVelocity Logo" className="h-7 w-7 object-contain mr-2.5 transition-transform group-hover:scale-105" />
             <span className="text-xl font-bold tracking-tight">
               Type<span className="text-blue-600 dark:text-blue-400">Velocity</span>
             </span>

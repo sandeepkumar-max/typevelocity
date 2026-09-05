@@ -35,7 +35,7 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
   const [totalTypedChars, setTotalTypedChars] = useState(0);
   
   const inputRef = useRef<HTMLInputElement>(null);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(0);
   const lastSpawnRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -92,10 +92,13 @@ export default function MeteorDrop({ settings, onSettingsChange, onComplete }: M
       const containerWidth = containerRef.current?.clientWidth || 800;
       const word = generateText(settings.difficulty, 1, settings.easyCase, settings.language, settings.hindiFont).trim();
       
+      const estimatedWidth = Math.max(100, word.length * 16 + 40);
+      const safeX = Math.max(10, Math.random() * Math.max(10, containerWidth - estimatedWidth - 20) + 10);
+
       const newMeteor: Meteor = {
         id: Math.random(),
         word,
-        x: Math.random() * (containerWidth - 100) + 20, // keep away from edges
+        x: safeX,
         y: -50,
         speed: diffSettings.baseSpeed + (clearedItems * diffSettings.speedMultiplier) // speed increases with score
       };

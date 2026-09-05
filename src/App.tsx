@@ -9,7 +9,7 @@ import { updateMissionProgress } from './utils/missions';
 
 import { auth, db } from './lib/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Keyboard, Loader2 } from 'lucide-react';
+import { Keyboard, Loader2, Zap, Play, Sparkles, X, Minimize2, Maximize2 } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
@@ -23,12 +23,13 @@ const TypingGuide = lazy(() => import('./components/TypingGuide'));
 const LessonList = lazy(() => import('./components/LessonList'));
 const LessonPractice = lazy(() => import('./components/LessonPractice'));
 const HeroAnimation = lazy(() => import('./components/HeroAnimation'));
+const HomeView = lazy(() => import('./components/HomeView'));
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.replace('/', '');
-      const validViews = ['home', 'practice', 'meteor', 'sprint', 'bubble', 'about', 'help', 'contact', 'stats', 'guide', 'lessons', 'lesson-practice', 'privacy', 'terms'];
+      const validViews = ['home', 'practice', 'meteor', 'sprint', 'bubble', 'arena', 'about', 'help', 'contact', 'stats', 'guide', 'lessons', 'lesson-practice', 'privacy', 'terms'];
       if (validViews.includes(path)) return path as ViewState;
     }
     return 'home';
@@ -46,6 +47,8 @@ export default function App() {
   });
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isArenaModalOpen, setIsArenaModalOpen] = useState(false);
+  const [isArenaFloating, setIsArenaFloating] = useState(false);
   const [lastSession, setLastSession] = useState<SessionStats | null>(null);
   const [currentLessonId, setCurrentLessonId] = useState<number>(1);
   const [courseType, setCourseType] = useState<'mangal' | 'krutidev' | 'english'>('english');
@@ -93,6 +96,7 @@ export default function App() {
     const titles: Record<string, string> = {
       home: 'TypeVelocity - Best Online Typing Tutor & Speed Test',
       practice: 'Typing Practice - Test your WPM | TypeVelocity',
+      arena: 'Cyber Typing Arena - Real-time Keystroke Tracking | TypeVelocity',
       meteor: 'Meteor Drop - Typing Game | TypeVelocity',
       sprint: 'Neon Sprint - Typing Game | TypeVelocity',
       bubble: 'Spirit Catch - Typing Game | TypeVelocity',
@@ -105,6 +109,7 @@ export default function App() {
     const descriptions: Record<string, string> = {
       home: 'Master your typing speed with TypeVelocity. Free online typing tutor, WPM tests, and typing games.',
       practice: 'Take a free typing test to find out your WPM and accuracy. Practice English and Hindi typing.',
+      arena: 'Interactive touch-typing speed arena with continuous streaming words and live hand guides.',
       meteor: 'Defend against falling words in this fast-paced typing survival game.',
       sprint: 'Race against the clock in short, high-intensity typing bursts to maximize speed.',
       guide: 'Learn the fundamentals of touch typing, finger placement, and posture to type faster.'
@@ -130,7 +135,7 @@ export default function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.replace('/', '');
-      const validViews = ['home', 'practice', 'meteor', 'sprint', 'bubble', 'about', 'help', 'contact', 'stats', 'guide', 'lessons', 'lesson-practice', 'privacy', 'terms'];
+      const validViews = ['home', 'practice', 'meteor', 'sprint', 'bubble', 'arena', 'about', 'help', 'contact', 'stats', 'guide', 'lessons', 'lesson-practice', 'privacy', 'terms'];
       if (validViews.includes(path)) {
         setCurrentView(path as ViewState);
       } else {
@@ -144,41 +149,12 @@ export default function App() {
   const renderContent = () => {
     switch (currentView) {
       case 'home': return (
-        <div className="flex flex-col xl:flex-row items-center justify-between min-h-[70vh] max-w-7xl mx-auto gap-12 xl:gap-8 px-4 py-8 xl:py-0">
-           
-           <div className="flex-1 flex flex-col items-center xl:items-start text-center xl:text-left space-y-8 z-10">
-             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium text-sm border border-blue-500/20 shadow-sm backdrop-blur-sm">
-               <span className="relative flex h-2 w-2">
-                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-               </span>
-               New: Meteor Drop & Neon Sprint modes available!
-             </div>
-             <h1 className="text-4xl sm:text-6xl xl:text-7xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1]">
-               Type Faster, <br className="hidden sm:block" />
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-sky-400">Think Clearer.</span>
-             </h1>
-             <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed">
-               TypeVelocity is a professional typing platform designed to enhance your speed and accuracy. Gamified exercises, competitive sprints, and detailed analytics.
-             </p>
-             
-             <div className="w-full flex flex-col items-center xl:items-start space-y-8">
-              <DailyMissions />
-            </div>
-            <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full sm:w-auto pt-4 justify-center xl:justify-start">
-               <button onClick={() => setCurrentView('practice')} className="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg hover:bg-blue-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2">
-                 Start Typing <Keyboard className="w-5 h-5" />
-               </button>
-               <button onClick={() => setCurrentView('lessons')} className="px-8 py-4 bg-emerald-600 text-white rounded-full font-bold text-lg hover:bg-emerald-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2">
-                 Learn Typing Levels
-               </button>
-             </div>
-           </div>
-           
-           <div className="flex-1 w-full max-w-2xl xl:max-w-none relative">
-             <HeroAnimation />
-           </div>
-        </div>
+        <HomeView
+          theme={theme}
+          settings={settings}
+          onSettingsChange={setSettings}
+          onViewChange={setCurrentView}
+        />
       );
       case 'about': return (
         <div className="glass-panel p-8 sm:p-12 rounded-2xl w-full max-w-4xl mx-auto mt-4 sm:mt-8 space-y-6">
@@ -267,7 +243,37 @@ export default function App() {
            <p>TypeVelocity may revise these terms of service for its website at any time without notice. By using this website you are agreeing to be bound by the then current version of these terms of service.</p>
         </div>
       );
-      case 'practice': return <PracticeArea settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
+      case 'practice': return (
+        <PracticeArea 
+          settings={settings} 
+          onSettingsChange={setSettings} 
+          onComplete={handleSessionComplete} 
+          onOpenArena={() => setCurrentView('arena')}
+        />
+      );
+      case 'arena': return (
+        <div className="w-full max-w-5xl mx-auto py-2 px-2 sm:px-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                <Zap className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Interactive Typing Arena</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Stream words continuously with responsive tactile hand guidance</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setCurrentView('practice')}
+              className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all flex items-center gap-1.5"
+            >
+              <Keyboard className="w-3.5 h-3.5 text-blue-500" />
+              <span>Standard Practice</span>
+            </button>
+          </div>
+          <HeroAnimation theme={theme} />
+        </div>
+      );
       case 'meteor': return <MeteorDrop settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
       case 'sprint': return <NeonSprint settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
       case 'bubble': return <BubbleShoot settings={settings} onSettingsChange={setSettings} onComplete={handleSessionComplete} />;
@@ -329,7 +335,7 @@ export default function App() {
         theme={theme}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 relative z-10 h-screen overflow-y-auto">
+      <div id="main-scroll-container" className="flex-1 flex flex-col min-w-0 transition-all duration-300 relative z-10 h-screen overflow-y-auto scroll-smooth">
         <Header 
           currentView={currentView} 
           onViewChange={setCurrentView} 
@@ -349,6 +355,115 @@ export default function App() {
         </main>
         <Footer onViewChange={setCurrentView} />
       </div>
+
+      {/* Floating Sticky Corner Trigger Button for Cyber Arena (when not on arena or home view) */}
+      {currentView !== 'arena' && currentView !== 'home' && !isArenaModalOpen && !isArenaFloating && (
+        <div className="fixed bottom-5 right-5 z-40">
+          <button
+            onClick={() => setIsArenaModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-xl hover:shadow-blue-500/25 transition-all hover:scale-105 border border-blue-400/40 backdrop-blur-md"
+            title="Open Interactive Typing Arena"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-300 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            </span>
+            <Zap className="w-4 h-4" />
+            <span className="hidden sm:inline">Typing Arena</span>
+          </button>
+        </div>
+      )}
+
+      {/* Sticky Mini Floating Widget (when minimized) */}
+      {isArenaFloating && (
+        <div className="fixed bottom-4 right-4 z-50 w-[350px] sm:w-[450px] max-w-[calc(100vw-32px)] rounded-2xl border border-blue-500/40 shadow-2xl p-2.5 sm:p-3 bg-slate-950/95 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-6">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+            <div className="flex items-center gap-2 text-xs font-bold text-blue-400">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <Zap className="w-4 h-4 text-blue-400" />
+              <span>Typing Arena • Live Practice</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setIsArenaFloating(false);
+                  setIsArenaModalOpen(true);
+                }}
+                className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-white transition-colors"
+                title="Expand to Fullscreen Dialog"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setIsArenaFloating(false)}
+                className="p-1 hover:bg-red-500/20 rounded text-slate-400 hover:text-red-400 transition-colors"
+                title="Close"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+          <HeroAnimation theme={theme} isCompact={true} onClose={() => setIsArenaFloating(false)} />
+        </div>
+      )}
+
+      {/* Arena Full Modal Dialog Popup */}
+      {isArenaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 backdrop-blur-md animate-in fade-in">
+          <div 
+            className="relative w-full max-w-5xl max-h-[95vh] overflow-y-auto rounded-2xl sm:rounded-3xl border border-blue-500/30 shadow-2xl p-3 sm:p-5 md:p-6 bg-slate-950/95"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    Interactive Typing Arena
+                    <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      Live
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400 hidden sm:block">
+                    Words stream directly into center. Type on your keyboard to follow hand positioning guides.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setIsArenaModalOpen(false);
+                    setIsArenaFloating(true);
+                  }}
+                  className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 text-xs font-semibold flex items-center gap-1 transition-all"
+                  title="Minimize to Corner Widget"
+                >
+                  <Minimize2 className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Minimize</span>
+                </button>
+                <button
+                  onClick={() => setIsArenaModalOpen(false)}
+                  className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all"
+                  title="Close Dialog (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <HeroAnimation 
+              theme={theme} 
+              onClose={() => setIsArenaModalOpen(false)} 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

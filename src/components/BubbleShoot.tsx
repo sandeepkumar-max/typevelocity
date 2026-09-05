@@ -45,22 +45,22 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
   const [errors, setErrors] = useState(0);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(0);
   const lastSpawnRef = useRef<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const getDifficultySettings = () => {
     switch (settings.difficulty) {
       case 'easy':
-        return { baseSpeed: 0.3, speedMultiplier: 0.005, baseSpawn: 3500, spawnMultiplier: 15, minSpawn: 2000 };
+        return { baseSpeed: 0.3, speedMultiplier: 0.005, baseSpawn: 3500, spawnMultiplier: 15, minSpawn: 2000, scoreMult: 1 };
       case 'medium':
-        return { baseSpeed: 0.6, speedMultiplier: 0.01, baseSpawn: 2500, spawnMultiplier: 25, minSpawn: 1200 };
+        return { baseSpeed: 0.6, speedMultiplier: 0.01, baseSpawn: 2500, spawnMultiplier: 25, minSpawn: 1200, scoreMult: 1.5 };
       case 'hard':
-        return { baseSpeed: 1.0, speedMultiplier: 0.03, baseSpawn: 1800, spawnMultiplier: 35, minSpawn: 800 };
+        return { baseSpeed: 1.0, speedMultiplier: 0.03, baseSpawn: 1800, spawnMultiplier: 35, minSpawn: 800, scoreMult: 2 };
       case 'developer':
-        return { baseSpeed: 1.5, speedMultiplier: 0.05, baseSpawn: 1200, spawnMultiplier: 45, minSpawn: 500 };
+        return { baseSpeed: 1.5, speedMultiplier: 0.05, baseSpawn: 1200, spawnMultiplier: 45, minSpawn: 500, scoreMult: 3 };
       default:
-        return { baseSpeed: 0.6, speedMultiplier: 0.01, baseSpawn: 2500, spawnMultiplier: 25, minSpawn: 1200 };
+        return { baseSpeed: 0.6, speedMultiplier: 0.01, baseSpawn: 2500, spawnMultiplier: 25, minSpawn: 1200, scoreMult: 1.5 };
     }
   };
 
@@ -94,13 +94,14 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
       const containerHeight = containerRef.current?.clientHeight || 600;
       const word = generateText(settings.difficulty, 1, settings.easyCase, settings.language, settings.hindiFont).trim();
       
-      const size = Math.max(80, word.length * 15 + 40); // Size based on word length
+      const size = Math.max(80, word.length * 16 + 40); // Size based on word length
+      const safeX = Math.max(10, Math.random() * Math.max(10, containerWidth - size - 20) + 10);
       const colorClass = BUBBLE_COLORS[Math.floor(Math.random() * BUBBLE_COLORS.length)];
       
       const newBubble: Bubble = {
         id: Math.random(),
         word,
-        x: Math.random() * (containerWidth - size),
+        x: safeX,
         y: containerHeight, // Start at the bottom edge so it appears immediately
         speed: diffSettings.baseSpeed + (clearedItems * diffSettings.speedMultiplier),
         size,
@@ -168,7 +169,7 @@ export default function BubbleShoot({ settings, onSettingsChange, onComplete }: 
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (status === 'finished' || status === 'gameover') return;
+    if (status === 'finished') return;
     
     const newVal = e.target.value;
     

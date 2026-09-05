@@ -4,15 +4,16 @@ import { generateText } from '../utils/words';
 import { mapKeystroke } from '../utils/keyboardMap';
 import SettingsBar from './SettingsBar';
 import { playKeystrokeSound, playErrorSound, playSuccessSound } from '../utils/audio';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Zap } from 'lucide-react';
 
 interface PracticeAreaProps {
   settings: GameSettings;
   onSettingsChange: (settings: GameSettings) => void;
   onComplete?: (stats: SessionStats) => void;
+  onOpenArena?: () => void;
 }
 
-export default function PracticeArea({ settings, onSettingsChange, onComplete }: PracticeAreaProps) {
+export default function PracticeArea({ settings, onSettingsChange, onComplete, onOpenArena }: PracticeAreaProps) {
   const [targetText, setTargetText] = useState('');
   const [userInput, setUserInput] = useState('');
   const [status, setStatus] = useState<'idle' | 'running' | 'finished'>('idle');
@@ -273,6 +274,24 @@ export default function PracticeArea({ settings, onSettingsChange, onComplete }:
     <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
       <SettingsBar settings={settings} onSettingsChange={onSettingsChange} disabled={status === 'running'} />
       
+      {/* Optional Arena Launcher within Practice */}
+      {onOpenArena && (
+        <div className="w-full mb-3 flex items-center justify-between px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs sm:text-sm">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-blue-500" />
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              Want fast continuous typing with live hand positioning?
+            </span>
+          </div>
+          <button
+            onClick={onOpenArena}
+            className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-xs transition-all shadow-sm flex items-center gap-1.5"
+          >
+            <span>Launch Typing Arena</span>
+          </button>
+        </div>
+      )}
+
       {/* HUD */}
       <div className="flex justify-between w-full mb-4 sm:mb-8 glass-panel px-4 sm:px-6 py-3 sm:py-4 rounded-xl">
         <div className="flex flex-col">
